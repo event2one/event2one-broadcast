@@ -18,10 +18,23 @@ Vous ne devez pas copier uniquement le dossier "build". Vous devez transférer l
 **Option A : Via Git (Recommandé)**
 Si votre projet est sur GitHub/GitLab :
 ```bash
+
 cd /var/www
 git clone https://github.com/event2one/event2one-broadcast.git broadcast
 cd broadcast
 ```
+
+> [!IMPORTANT]
+> **Authentification GitHub** :
+> Depuis 2021, GitHub n'accepte plus les mots de passe pour les opérations Git en HTTPS.
+> Lorsque Git vous demande votre mot de passe, vous devez utiliser un **Personal Access Token (PAT)**.
+>
+> **Comment générer un PAT :**
+> 1. Allez sur GitHub > Settings > Developer settings > Personal access tokens > Tokens (classic).
+> 2. Cliquez sur "Generate new token (classic)".
+> 3. Cochez la case `repo` (pour accéder aux dépôts privés).
+> 4. Générez le token et copiez-le.
+> 5. Collez ce token à la place du mot de passe dans le terminal.
 
 **Option B : Via FTP / SCP**
 Copiez tout le dossier du projet **SAUF** `node_modules` et `.next`.
@@ -97,7 +110,24 @@ pm2 startup
 
 ## 5. Configuration Nginx
 
-Configurez Nginx pour rediriger le trafic vers les ports 3001 et 3002.
+### 5.1 Vérifier l'installation
+Vérifiez si Nginx est déjà installé :
+```bash
+nginx -v
+# ou
+systemctl status nginx
+```
+
+Si ce n'est pas le cas, installez-le :
+```bash
+sudo apt update
+sudo apt install nginx
+```
+
+### 5.2 Configuration du site
+Une fois installé, créez ou modifiez un fichier de configuration (ex: `/etc/nginx/sites-available/default` ou un nouveau fichier dans `/etc/nginx/sites-available/broadcast`).
+
+Configurez Nginx pour rediriger le trafic vers les ports 3001 et 3002 :
 
 ```nginx
 server {
@@ -105,8 +135,9 @@ server {
     server_name votre-domaine.com;
 
     # Frontend (Next.js) -> Port 3002
-    location /event/ {
-        proxy_pass http://localhost:3002;
+    # L'application est configurée avec basePath: '/broadcast'
+    location /broadcast/ {
+        proxy_pass http://localhost:3002/broadcast/;
         proxy_http_version 1.1;
         proxy_set_header Upgrade $http_upgrade;
         proxy_set_header Connection 'upgrade';
@@ -115,7 +146,9 @@ server {
     }
 
     # Backend (API) -> Port 3001
-    location / {
+    # Accessible via /broadcast/api/
+    location /broadcast/api/ {
+        rewrite ^/broadcast/api/(.*) /api/$1 break;
         proxy_pass http://localhost:3001;
         proxy_http_version 1.1;
         proxy_set_header Upgrade $http_upgrade;
@@ -126,8 +159,45 @@ server {
 }
 ```
 
-## 6. Commandes utiles
+## 6. Alternative : Configuration Apache
+
+Si vous préférez utiliser Apache au lieu de Nginx, c'est tout à fait possible.
+
+### 6.1 Activer les modules nécessaires
+Assurez-vous que les modules proxy sont activés :
+```bash
+a2enmod proxy
+a2enmod proxy_http
+systemctl restart apache2
+```
+
+### 6.2 Configuration du VirtualHost
+Créez ou modifiez votre fichier de configuration (ex: `/etc/apache2/sites-available/000-default.conf` ou votre fichier dédié).
+
+```apache
+<VirtualHost *:80>
+    ServerName votre-domaine.com
+
+    # Frontend (Next.js) -> Port 3002
+    ProxyPreserveHost On
+    ProxyPass /broadcast/ http://localhost:3002/broadcast/
+    ProxyPassReverse /broadcast/ http://localhost:3002/broadcast/
+
+    # Backend (API) -> Port 3001
+    # Rediriger /broadcast/api/ vers l'API
+    ProxyPass /broadcast/api/ http://localhost:3001/api/
+    ProxyPassReverse /broadcast/api/ http://localhost:3001/api/
+</VirtualHost>
+```
+
+## 7. Commandes utiles
 
 - `pm2 list` : Voir les processus.
 - `pm2 logs` : Voir les logs en temps réel.
 - `pm2 restart all` : Redémarrer tout.
+
+### 7.2 Commandes système
+- `cat fichier` : Afficher tout le contenu d'un fichier.
+- `less fichier` : Lire un fichier page par page (tapez `q` pour quitter).
+- `tail -f fichier` : Suivre la fin d'un fichier en temps réel (utile pour les logs).
+- `nano fichier` : Éditer un fichier (Ctrl+O pour sauver, Ctrl+X pour quitter).

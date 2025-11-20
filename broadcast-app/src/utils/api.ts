@@ -10,6 +10,8 @@ export interface FetchParams {
     idConfEvent: number;
 }
 
+export const API_URL = 'https://www.mlg-consulting.com/smart_territory/form/api.php';
+
 export async function fetchInitialData(params: FetchParams) {
     const { idEvent, idConfEvent } = params;
 
@@ -26,25 +28,28 @@ export async function fetchInitialData(params: FetchParams) {
     };
 
     // Construct URLs based on server.js logic
-    const confEventUrl = `https://www.mlg-consulting.com/smart_territory/form/api.php?action=getConfEvent&id_event=${idEvent}&filter= AND type NOT IN(5, 65, 69, 84, 92, 95) AND publier!='n' AND id_conf_event IN(${idConfEvent})`;
+    const confEventUrl = `${API_URL}?action=getConfEvent&id_event=${idEvent}&filter= AND type NOT IN(5, 65, 69, 84, 92, 95) AND publier!='n' AND id_conf_event IN(${idConfEvent})`;
 
-    const eventsUrl = `https://www.mlg-consulting.com/smart_territory/form/api.php?action=getEvents&id_event=${idEvent}`;
+    const eventsUrl = `${API_URL}?action=getEvents&id_event=${idEvent}`;
 
-    const confEventContributionUrl = `https://www.mlg-consulting.com/smart_territory/form/api.php?action=getConfEventContribution&filter= WHERE id_conf_event IN(SELECT id_conf_event FROM conf_event WHERE id_event ="${idEvent}") AND id_conf_event IN(${idConfEvent}) ORDER BY conf_event_contribution_order ASC`;
+    const confEventContributionUrl = `${API_URL}?action=getConfEventContribution&filter= WHERE id_conf_event IN(SELECT id_conf_event FROM conf_event WHERE id_event ="${idEvent}") AND id_conf_event IN(${idConfEvent}) ORDER BY conf_event_contribution_order ASC`;
 
     const prestaParams = `WHERE (id_contact IN(SELECT id_contact FROM conferenciers WHERE id_event=${idEvent} AND id_contact NOT IN("",0) AND id_conf_event IN(${idConfEvent}))) OR (id_contact IN (SELECT id_contact FROM conf_event_contribution WHERE id_conf_event IN (SELECT id_conf_event FROM conf_event WHERE id_event=${idEvent} AND id_conf_event IN(${idConfEvent})) AND id_contact NOT IN("",0)))`;
-    const prestaListUrl = `https://www.mlg-consulting.com/smart_territory/form/api.php?action=getPrestaList&params=${encodeURIComponent(prestaParams)}`;
+    const prestaListUrl = `${API_URL}?action=getPrestaList&params=${encodeURIComponent(prestaParams)}`;
 
-    const eventContactTypeListUrl = 'https://www.mlg-consulting.com/smart_territory/form/api.php?action=getEventContactTypeList&filter=WHERE event_contact_type_state="active"';
+    const eventContactTypeListUrl = `${API_URL}?action=getEventContactTypeList&filter=WHERE event_contact_type_state="active"`;
 
     const contactStatutFilter = `WHERE id_contact IN(SELECT id_contact FROM conferenciers WHERE id_event=${idEvent} AND id_contact NOT IN(0, '') AND id_conf_event IN(${idConfEvent}) ) OR (id_contact IN (SELECT id_contact FROM conf_event_contribution WHERE id_contact NOT IN(0, '') AND  id_conf_event IN (SELECT id_conf_event FROM conf_event WHERE id_event=${idEvent} AND id_conf_event IN(${idConfEvent}))))`;
-    const contactStatutListUrl = `https://www.mlg-consulting.com/smart_territory/form/api.php?action=getContactStatutList&filter=${encodeURIComponent(contactStatutFilter)}`;
+    const contactStatutListUrl = `${API_URL}?action=getContactStatutList&filter=${encodeURIComponent(contactStatutFilter)}`;
+
+    const futureEventsUrl = `${API_URL}?action=getEvents&futur=y&params=WHERE`;
+    const confEventListLightUrl = `${API_URL}?action=getConfeventLight&filter= AND e.id_event=${idEvent}`;
 
     let partenaireListUrl;
     if (idConfEvent === 0) {
-        partenaireListUrl = `https://www.mlg-consulting.com/smart_territory/form/api.php?action=getPartenairesLight&params= AND id_event=${idEvent} and afficher !='0'&exclude_fields=event,conf_event`;
+        partenaireListUrl = `${API_URL}?action=getPartenairesLight&params= AND id_event=${idEvent} and afficher !='0'&exclude_fields=event,conf_event`;
     } else {
-        partenaireListUrl = `https://www.mlg-consulting.com/smart_territory/form/api.php?action=getPartenairesLight&params= AND id_event=${idEvent} AND id_conf_event IN(${idConfEvent}) and afficher !='0'&exclude_fields=event,conf_event`;
+        partenaireListUrl = `${API_URL}?action=getPartenairesLight&params= AND id_event=${idEvent} AND id_conf_event IN(${idConfEvent}) and afficher !='0'&exclude_fields=event,conf_event`;
     }
 
     // Execute all requests in parallel
@@ -55,7 +60,9 @@ export async function fetchInitialData(params: FetchParams) {
         prestaList,
         eventContactTypeList,
         contactStatutList,
-        partenaireList
+        partenaireList,
+        futureEvents,
+        confEventListLight
     ] = await Promise.all([
         fetchData(confEventUrl),
         // fetchData(eventsUrl),
@@ -63,7 +70,9 @@ export async function fetchInitialData(params: FetchParams) {
         fetchData(prestaListUrl),
         fetchData(eventContactTypeListUrl),
         fetchData(contactStatutListUrl),
-        fetchData(partenaireListUrl)
+        fetchData(partenaireListUrl),
+        fetchData(futureEventsUrl),
+        fetchData(confEventListLightUrl)
     ]);
 
     return {
@@ -75,5 +84,7 @@ export async function fetchInitialData(params: FetchParams) {
         prestaList: Array.isArray(prestaList) ? prestaList : [],
         contactStatutList: Array.isArray(contactStatutList) ? contactStatutList : [],
         eventContactTypeList: Array.isArray(eventContactTypeList) ? eventContactTypeList : [],
+        futureEvents: Array.isArray(futureEvents) ? futureEvents : [],
+        confEventListLight: Array.isArray(confEventListLight) ? confEventListLight : [],
     };
 }

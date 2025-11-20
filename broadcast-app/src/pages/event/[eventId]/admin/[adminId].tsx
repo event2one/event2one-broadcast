@@ -1,65 +1,50 @@
+import React, { useState, useEffect } from 'react';
 import { GetServerSidePropsContext } from 'next';
 import Image from 'next/image';
-import React, { useEffect, useState } from 'react';
-import AdminLayout from '../../../../components/AdminLayout';
 import { io, Socket } from 'socket.io-client';
 import { motion } from 'framer-motion';
-import { Button } from '../../../../components/ui/button';
+
+import AdminLayout from '../../../../components/AdminLayout';
 import { Badge } from '../../../../components/ui/badge';
+import { Button } from '../../../../components/ui/button';
 import { Avatar } from '../../../../components/ui/avatar';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '../../../../components/ui/tooltip';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '../../../../components/ui/dialog';
 import { Input } from '../../../../components/ui/input';
+import EventSessionSelector from '../../../../components/EventSessionSelector';
 import { Play, Eraser, EyeOff, UserPlus, GripVertical, Search } from 'lucide-react';
 import { DndContext, closestCenter, PointerSensor, useSensor, useSensors, DragEndEvent } from '@dnd-kit/core';
 import { arrayMove, SortableContext, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { fetchInitialData } from '../../../../utils/api';
+import { fetchInitialData, API_URL } from '../../../../utils/api';
+import {
+    Presta,
+    EventContactType,
+    Contact,
+    Partner,
+    Event,
+    confEventType,
+    ConfEvent,
+    ConfEventItem,
+    ConfEventContribution,
+    ContactStatut
+} from '../../../../types';
 
-interface Presta {
-    id_presta: string;
-    presta_nom: string;
-    punchline?: string;
-    id_contact: string; // Added to fix type error
-}
 
-interface EventContactType {
-    id_event_contact_type: string;
-    libelle: string;
-    event_contact_type_color: string;
-}
-
-interface Contact {
-    id_contact: string;
-    nom: string;
-    prenom: string;
-    societe: string;
-    flag: string;
-    logos: { tiny: string };
-    photos: { tiny: string };
-    prestas_list: Presta[];
-}
-
-interface Partner {
-    id_conferencier: string;
-    contact: Contact;
-    conferencier_statut?: {
-        id_event_contact_type: string;
-        event_contact_type_color: string;
-        libelle: string;
-    };
-}
 
 interface AdminPageProps {
     idEvent: number;
     idConfEvent: number;
-    confEventList: any[]; // You can define a more specific type if you know the shape
-    confEventContributionList: any[]; // You can define a more specific type if you know the shape
+    confEventList: ConfEventItem[];
+    confEventContributionList: ConfEventContribution[];
     partenaireList: Partner[];
     prestaList: Presta[];
-    contactStatutList: any[]; // You can define a more specific type if you know the shape
+    contactStatutList: ContactStatut[];
     eventContactTypeList: EventContactType[];
+    futureEvents: Event[];
+    confEventListLight: ConfEvent[];
 }
+
 
 interface SortableContactRowProps {
     partenaire: Partner;
@@ -69,10 +54,11 @@ interface SortableContactRowProps {
     onPublish: (contactId: string, idEvent: number, prestaId: string | undefined, id_event_contact_type: string | undefined) => void;
     onClear: (id: string) => void;
     onHide: (id: string) => void;
+    onEdit: (presta: Presta) => void;
 }
 
 // Compact Sortable Row Component
-function SortableContactRow({ partenaire, presta, index, idEvent, onPublish, onClear, onHide }: SortableContactRowProps) {
+function SortableContactRow({ partenaire, presta, index, idEvent, onPublish, onClear, onHide, onEdit }: SortableContactRowProps) {
     const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: partenaire.id_conferencier });
 
     const style = {
@@ -80,6 +66,18 @@ function SortableContactRow({ partenaire, presta, index, idEvent, onPublish, onC
         transition,
         opacity: isDragging ? 0.5 : 1,
     };
+
+    if (!partenaire.contact) {
+        return (
+            <div ref={setNodeRef} style={style} className="group flex items-center gap-2 bg-neutral-900/30 border border-neutral-800/50 rounded-lg px-2 py-1.5">
+                <div {...attributes} {...listeners} className="cursor-move text-neutral-600">
+                    <GripVertical className="w-3 h-3" />
+                </div>
+                <span className="text-neutral-500 font-mono w-4 text-center text-[10px]">{index + 1}</span>
+                <span className="text-red-500">Contact data is missing for this partner.</span>
+            </div>
+        );
+    }
 
     return (
         <div
@@ -107,7 +105,7 @@ function SortableContactRow({ partenaire, presta, index, idEvent, onPublish, onC
 
                 {partenaire.conferencier_statut && (
                     <Badge
-                        style={{ backgroundColor: partenaire.conferencier_statut.event_contact_type_color }}
+                        style={{ backgroundColor: partenaire.conferencier_statut.color }}
                         className="text-[10px] px-1 py-0 h-4"
                     >
                         {partenaire.conferencier_statut.libelle}
@@ -118,7 +116,19 @@ function SortableContactRow({ partenaire, presta, index, idEvent, onPublish, onC
                 )}
             </div>
             <div className="hidden md:flex flex-col min-w-0 max-w-[150px]">
-                <span className="text-neutral-400 truncate text-[11px]">{partenaire.contact.societe}</span>
+                <div className="flex items-center gap-1">
+                    <span className="text-neutral-400 truncate text-[11px]">{partenaire.contact.societe}</span>
+                    {presta && (
+                        <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={() => onEdit(presta)}
+                            className="h-4 w-4 p-0 text-neutral-500 hover:text-emerald-400"
+                        >
+                            <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-pencil"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z" /><path d="m15 5 4 4" /></svg>
+                        </Button>
+                    )}
+                </div>
                 {presta?.punchline && (
                     <span className="text-neutral-500 italic truncate text-[10px]">&quot;{presta.punchline}&quot;</span>
                 )}
@@ -133,7 +143,7 @@ function SortableContactRow({ partenaire, presta, index, idEvent, onPublish, onC
                             <Button
                                 size="sm"
                                 onClick={() => onPublish(
-                                    partenaire.contact?.id_contact,
+                                    partenaire.contact.id_contact,
                                     idEvent,
                                     presta?.id_presta,
                                     partenaire.conferencier_statut?.id_event_contact_type
@@ -178,16 +188,17 @@ function SortableContactRow({ partenaire, presta, index, idEvent, onPublish, onC
 }
 
 const AdminPage: React.FC<AdminPageProps> = (props) => {
-    const { idEvent, idConfEvent, eventContactTypeList: initialEventContactTypeList, partenaireList: initialPartenaireList, prestaList: initialPrestaList } = props;
+    const { idEvent, idConfEvent, eventContactTypeList: initialEventContactTypeList, partenaireList: initialPartenaireList, prestaList: initialPrestaList, futureEvents, confEventListLight } = props;
     const socketRef = React.useRef<Socket | null>(null);
 
     // Merge initial data
-    const mergedInitialPartenaireList = initialPartenaireList.map((partenaire: any) => {
+    const mergedInitialPartenaireList = initialPartenaireList.map((partenaire) => {
         const contactId = partenaire.contact?.id_contact || partenaire.id_contact;
+        const contact = partenaire.contact || { id_contact: contactId } as Contact;
         return {
             ...partenaire,
             contact: {
-                ...(partenaire.contact || {}),
+                ...contact,
                 prestas_list: initialPrestaList ? initialPrestaList.filter((p: Presta) => p.id_contact == contactId) : []
             }
         };
@@ -201,10 +212,15 @@ const AdminPage: React.FC<AdminPageProps> = (props) => {
     const [isDialogOpen, setIsDialogOpen] = useState(false);
     const [isPositioning, setIsPositioning] = useState(false);
 
-    // Confirmation Dialog States
     const [isConfirmDialogOpen, setIsConfirmDialogOpen] = useState(false);
     const [conferencierToHide, setConferencierToHide] = useState<string | null>(null);
     const [isHiding, setIsHiding] = useState(false);
+    const [searchTerm, setSearchTerm] = useState('');
+
+    // Edit Presta Dialog States
+    const [isEditPrestaDialogOpen, setIsEditPrestaDialogOpen] = useState(false);
+    const [editingPresta, setEditingPresta] = useState<Presta | null>(null);
+    const [isUpdatingPresta, setIsUpdatingPresta] = useState(false);
 
     const sensors = useSensors(useSensor(PointerSensor));
 
@@ -218,7 +234,7 @@ const AdminPage: React.FC<AdminPageProps> = (props) => {
     const clearJuryScreens = (id: string) => console.log("clearJuryScreens", id);
 
     const publishAllContent = (contactId: string, idEvent: number, prestaId: string | undefined, id_event_contact_type: string | undefined) => {
-        alert(contactId + " " + idEvent + " " + prestaId + " " + id_event_contact_type);
+
         const baseURL = 'https://www.event2one.com/screen_manager/content/';
         const demoBaseURL = `${baseURL}demo_video_presentation/?ie=${idEvent}&id_contact=${contactId}&id_presta=${prestaId}&`;
         const urls = [
@@ -247,7 +263,7 @@ const AdminPage: React.FC<AdminPageProps> = (props) => {
     const getPrestaList = async ({ idEvent, idConfEvent }: { idEvent: number, idConfEvent: number }) => {
         const params = `WHERE (id_contact IN(SELECT id_contact FROM conferenciers WHERE id_event=${idEvent} AND id_contact NOT IN("",0) AND id_conf_event IN(${idConfEvent}))) OR (id_contact IN (SELECT id_contact FROM conf_event_contribution WHERE id_conf_event IN (SELECT id_conf_event FROM conf_event WHERE id_event=${idEvent} AND id_conf_event IN(${idConfEvent})) AND id_contact NOT IN("",0)))`;
         try {
-            const response = await fetch(`https://www.mlg-consulting.com/smart_territory/form/api.php?action=getPrestaList&params=${params}`);
+            const response = await fetch(`${API_URL}?action=getPrestaList&params=${params}`);
             return await response.json();
         } catch (error) {
             console.error(error);
@@ -264,13 +280,9 @@ const AdminPage: React.FC<AdminPageProps> = (props) => {
         }
 
         try {
-            // S'assure que nous travaillons toujours avec un tableau de termes.
-            // Si query est une chaîne "John Doe", queryTerms devient ["John", "Doe"].
             const queryTerms = query.split(' ').filter(term => term.length > 0);
-
-            // Construit une condition de recherche pour chaque terme.
             const searchConditions = queryTerms.map(term => {
-                const cleanTerm = term.replace(/'/g, "''"); // Échappement simple pour les apostrophes
+                const cleanTerm = term.replace(/'/g, "''");
                 return `(
                 prenom LIKE '%${cleanTerm}%' 
                 OR nom LIKE '%${cleanTerm}%' 
@@ -280,13 +292,9 @@ const AdminPage: React.FC<AdminPageProps> = (props) => {
             )`;
             });
 
-            // Combine toutes les conditions avec 'AND' pour une recherche stricte.
             const params = `WHERE ${searchConditions.join(' AND ')} AND id_contact NOT IN(0, '') LIMIT 20`;
-
             const encodedParams = encodeURIComponent(params);
-
-            // Construit l'URL de l'API PHP
-            const apiUrl = `https://www.mlg-consulting.com/smart_territory/form/api.php?action=getContactList&params=${encodedParams}&get_presta_list=1`;
+            const apiUrl = `${API_URL}?action=getContactList&params=${encodedParams}&get_presta_list=1`;
 
             const response = await fetch(apiUrl);
             const data = await response.json();
@@ -311,7 +319,7 @@ const AdminPage: React.FC<AdminPageProps> = (props) => {
         params.append('afficher', '0');
 
         try {
-            await fetch('https://www.mlg-consulting.com/smart_territory/form/api.php?action=updateConferencier', {
+            await fetch(`${API_URL}?action=updateConferencier`, {
                 method: 'POST',
                 body: params
             });
@@ -330,23 +338,21 @@ const AdminPage: React.FC<AdminPageProps> = (props) => {
     const getPartenaires = async ({ idEvent, idConfEvent }: { idEvent: number, idConfEvent: number }) => {
         try {
             const req = idConfEvent == 0
-                ? `https://www.mlg-consulting.com/smart_territory/form/api.php?action=getPartenairesLight&params= AND id_event=${idEvent} and afficher !='0'&exclude_fields=event,conf_event`
-                : `https://www.mlg-consulting.com/smart_territory/form/api.php?action=getPartenairesLight&params= AND id_event=${idEvent} AND id_conf_event IN(${idConfEvent}) and afficher !='0'&exclude_fields=event,conf_event`;
+                ? `${API_URL}?action=getPartenairesLight&params= AND id_event=${idEvent} and afficher !='0'&exclude_fields=event,conf_event`
+                : `${API_URL}?action=getPartenairesLight&params= AND id_event=${idEvent} AND id_conf_event IN(${idConfEvent}) and afficher !='0'&exclude_fields=event,conf_event`;
 
             const [partenaires, prestas] = await Promise.all([
                 fetch(req).then(res => res.json()),
                 getPrestaList({ idEvent, idConfEvent })
             ]);
 
-            console.log('Debug Partenaires[0]:', partenaires[0]);
-            console.log('Debug Prestas[0]:', prestas[0]);
-
-            const mergedPartenaires = partenaires.map((partenaire: any) => {
+            const mergedPartenaires = partenaires.map((partenaire: Partner) => {
                 const contactId = partenaire.contact?.id_contact || partenaire.id_contact;
+                const contact = partenaire.contact || { id_contact: contactId } as Contact;
                 return {
                     ...partenaire,
                     contact: {
-                        ...(partenaire.contact || {}),
+                        ...contact,
                         prestas_list: prestas.filter((p: Presta) => p.id_contact == contactId)
                     }
                 };
@@ -358,23 +364,6 @@ const AdminPage: React.FC<AdminPageProps> = (props) => {
         }
     };
 
-
-    const deleteConferencier = async (idConferencier: string) => {
-        const params = new URLSearchParams();
-        params.append('id_conferencier', idConferencier);
-        try {
-            const response = await fetch('https://www.mlg-consulting.com/smart_territory/form/api.php?action=deleteConferencier', {
-                method: 'POST',
-                body: params
-            });
-            const data = await response.json();
-            await getPartenaires({ idEvent, idConfEvent });
-            console.log('Conferencier deleted:', data);
-        } catch (error) {
-            console.error('Error deleting conferencier:', error);
-        }
-    };
-
     const handleCreateConferencier = async (contact: Contact, contactTypeId: string, idConfEvent: string) => {
         const params = new URLSearchParams();
         params.append('id_event', idEvent.toString());
@@ -383,7 +372,7 @@ const AdminPage: React.FC<AdminPageProps> = (props) => {
         params.append('id_conf_event', idConfEvent);
         try {
 
-            const response = await fetch('https://www.mlg-consulting.com/smart_territory/form/api.php?action=createConferencier', {
+            const response = await fetch(`${API_URL}?action=createConferencier`, {
                 method: 'POST',
                 body: params
             });
@@ -394,6 +383,37 @@ const AdminPage: React.FC<AdminPageProps> = (props) => {
             console.log('Conferencier created:', data);
         } catch (error) {
             console.error('Error creating conferencier:', error);
+        }
+    };
+
+    const handleEditPresta = (presta: Presta) => {
+        setEditingPresta({ ...presta });
+        setIsEditPrestaDialogOpen(true);
+    };
+
+    const handleUpdatePresta = async () => {
+        if (!editingPresta) return;
+
+        setIsUpdatingPresta(true);
+        const params = new URLSearchParams();
+        params.append('id_presta', editingPresta.id_presta);
+        params.append('presta_nom', editingPresta.presta_nom);
+        params.append('punchline', editingPresta.punchline || '');
+        params.append('video_url', editingPresta.video_url || '');
+
+        try {
+            await fetch(`${API_URL}?action=updatePresta`, {
+                method: 'POST',
+                body: params
+            });
+
+            await getPartenaires({ idEvent, idConfEvent });
+            setIsEditPrestaDialogOpen(false);
+            setEditingPresta(null);
+        } catch (error) {
+            console.error("Error updating presta:", error);
+        } finally {
+            setIsUpdatingPresta(false);
         }
     };
 
@@ -413,7 +433,7 @@ const AdminPage: React.FC<AdminPageProps> = (props) => {
                 const params = new URLSearchParams();
                 params.append('order', JSON.stringify(orderUpdates));
 
-                fetch('https://www.mlg-consulting.com/smart_territory/form/api.php?action=updateConferencierOrder', {
+                fetch(`${API_URL}?action=updateConferencierOrder`, {
                     method: 'POST',
                     body: params
                 })
@@ -427,7 +447,6 @@ const AdminPage: React.FC<AdminPageProps> = (props) => {
     };
 
     useEffect(() => {
-        // Data is now coming from getServerSideProps, so initial fetch is not needed here.
         socketRef.current = io('http://localhost:3000');
         const socket = socketRef.current;
         socket.emit('dire_bonjour', { my: 'Bonjour server, je suis admin' });
@@ -445,11 +464,31 @@ const AdminPage: React.FC<AdminPageProps> = (props) => {
                 <div className="sticky top-0 z-10 backdrop-blur-xl bg-neutral-900/90 border-b border-neutral-800">
                     <div className="container mx-auto px-4 py-2">
                         <div className="flex items-center justify-between">
-                            <div>
-                                <h1 className="text-lg font-bold text-white">Gestion des Intervenants</h1>
-                                <p className="text-[10px] text-neutral-400">Event {idEvent} • Session {idConfEvent}</p>
+                            <div className="flex items-center gap-4">
+                                <div>
+                                    <h1 className="text-lg font-bold text-white">Gestion des Intervenants</h1>
+                                    <p className="text-[10px] text-neutral-400">Event {idEvent} • Session {idConfEvent}</p>
+                                </div>
+                                <div className="hidden md:flex items-center gap-2">
+                                    <EventSessionSelector
+                                        futureEvents={futureEvents}
+                                        confEventListLight={confEventListLight}
+                                        idEvent={idEvent}
+                                        idConfEvent={idConfEvent}
+                                    />
+                                </div>
                             </div>
-                            <div className="flex gap-2">
+                            <div className="flex gap-2 items-center">
+                                <div className="relative">
+                                    <Search className="absolute left-2 top-1/2 transform -translate-y-1/2 w-3 h-3 text-neutral-400" />
+                                    <Input
+                                        type="text"
+                                        placeholder="Filtrer..."
+                                        value={searchTerm}
+                                        onChange={(e) => setSearchTerm(e.target.value)}
+                                        className="h-7 w-40 pl-8 text-xs bg-neutral-800 border-neutral-700 focus:ring-emerald-600 text-white placeholder:text-neutral-500"
+                                    />
+                                </div>
                                 <Button variant="outline" size="sm" onClick={() => display('177820', 'https://www.event2one.com/screen_manager/content/blank.php', 9)} className="h-7 text-xs border-neutral-700 hover:bg-neutral-800">
                                     <EyeOff className="w-3 h-3 mr-1" />Masquer titrage
                                 </Button>
@@ -598,18 +637,86 @@ const AdminPage: React.FC<AdminPageProps> = (props) => {
                                         </div>
                                     </DialogContent>
                                 </Dialog>
+
+                                <Dialog open={isEditPrestaDialogOpen} onOpenChange={setIsEditPrestaDialogOpen}>
+                                    <DialogContent className="sm:max-w-[500px] bg-neutral-900 border-neutral-800">
+                                        <DialogHeader>
+                                            <DialogTitle className="text-white">Modifier la prestation</DialogTitle>
+                                        </DialogHeader>
+                                        {editingPresta && (
+                                            <div className="space-y-4 py-4">
+                                                <div>
+                                                    <label className="text-sm font-medium text-neutral-300 mb-1 block">Nom de la prestation</label>
+                                                    <Input
+                                                        value={editingPresta.presta_nom}
+                                                        onChange={(e) => setEditingPresta({ ...editingPresta, presta_nom: e.target.value })}
+                                                        className="bg-neutral-800 border-neutral-700 text-white"
+                                                    />
+                                                </div>
+                                                <div>
+                                                    <label className="text-sm font-medium text-neutral-300 mb-1 block">Punchline</label>
+                                                    <Input
+                                                        value={editingPresta.punchline || ''}
+                                                        onChange={(e) => setEditingPresta({ ...editingPresta, punchline: e.target.value })}
+                                                        className="bg-neutral-800 border-neutral-700 text-white"
+                                                    />
+                                                </div>
+                                                <div>
+                                                    <label className="text-sm font-medium text-neutral-300 mb-1 block">URL Vidéo</label>
+                                                    <Input
+                                                        value={editingPresta.video_url || ''}
+                                                        onChange={(e) => setEditingPresta({ ...editingPresta, video_url: e.target.value })}
+                                                        className="bg-neutral-800 border-neutral-700 text-white"
+                                                    />
+                                                </div>
+                                                <div className="flex justify-end gap-3 pt-4">
+                                                    <Button
+                                                        variant="outline"
+                                                        onClick={() => setIsEditPrestaDialogOpen(false)}
+                                                        className="border-neutral-700 text-neutral-300 hover:bg-neutral-800 hover:text-white"
+                                                        disabled={isUpdatingPresta}
+                                                    >
+                                                        Annuler
+                                                    </Button>
+                                                    <Button
+                                                        onClick={handleUpdatePresta}
+                                                        className="bg-emerald-600 hover:bg-emerald-700 text-white"
+                                                        disabled={isUpdatingPresta}
+                                                    >
+                                                        {isUpdatingPresta ? 'Enregistrement...' : 'Enregistrer'}
+                                                    </Button>
+                                                </div>
+                                            </div>
+                                        )}
+                                    </DialogContent>
+                                </Dialog>
                             </div>
                         </div>
                     </div>
                 </div>
                 <div className="container mx-auto px-4 py-2">
                     <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
-                        <SortableContext items={partenaireList2.map(p => p.id_conferencier)} strategy={verticalListSortingStrategy}>
+                        <SortableContext items={partenaireList2.filter(p => {
+                            const term = searchTerm.toLowerCase();
+                            const contact = p.contact;
+                            return (
+                                contact.nom?.toLowerCase().includes(term) ||
+                                contact.prenom?.toLowerCase().includes(term) ||
+                                contact.societe?.toLowerCase().includes(term)
+                            );
+                        }).map(p => p.id_conferencier)} strategy={verticalListSortingStrategy}>
                             <div className="space-y-0.5">
-                                {partenaireList2 && partenaireList2.map((partenaire, index) => {
+                                {partenaireList2 && partenaireList2.filter(p => {
+                                    const term = searchTerm.toLowerCase();
+                                    const contact = p.contact;
+                                    return (
+                                        contact.nom?.toLowerCase().includes(term) ||
+                                        contact.prenom?.toLowerCase().includes(term) ||
+                                        contact.societe?.toLowerCase().includes(term)
+                                    );
+                                }).map((partenaire, index) => {
                                     // Get the first prestation from the list
                                     const presta = partenaire.contact.prestas_list?.[0];
-                                    console.log('Presta for', partenaire.contact.nom, ':', presta);
                                     if (!partenaire.contact) return null;
                                     return (
                                         <SortableContactRow
@@ -621,6 +728,7 @@ const AdminPage: React.FC<AdminPageProps> = (props) => {
                                             onPublish={publishAllContent}
                                             onClear={clearJuryScreens}
                                             onHide={handleUpdateConferencier}
+                                            onEdit={handleEditPresta}
                                         />
                                     );
                                 })}

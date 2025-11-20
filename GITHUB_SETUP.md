@@ -20,8 +20,8 @@ git commit -m "Initial commit"
 
 *Note : Si c'est la première fois que vous utilisez Git, il vous demandera peut-être de configurer votre email :*
 ```bash
-git config --global user.email "votre-email@exemple.com"
-git config --global user.name "Votre Nom"
+git config --global user.email "daviddaville@gmail.com"
+git config --global user.name "David Daville"
 ```
 
 ## 3. Créer le dépôt sur GitHub
