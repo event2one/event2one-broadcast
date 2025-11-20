@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { GetServerSidePropsContext } from 'next';
 import Image from 'next/image';
 import { io, Socket } from 'socket.io-client';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 
 import AdminLayout from '../../../../components/AdminLayout';
 import { Badge } from '../../../../components/ui/badge';
@@ -12,7 +12,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '../../
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '../../../../components/ui/dialog';
 import { Input } from '../../../../components/ui/input';
 import EventSessionSelector from '../../../../components/EventSessionSelector';
-import { Play, Eraser, EyeOff, UserPlus, GripVertical, Search } from 'lucide-react';
+import { Play, Eraser, EyeOff, UserPlus, GripVertical, Search, Monitor, X } from 'lucide-react';
 import { DndContext, closestCenter, PointerSensor, useSensor, useSensors, DragEndEvent } from '@dnd-kit/core';
 import { arrayMove, SortableContext, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
@@ -83,7 +83,7 @@ function SortableContactRow({ partenaire, presta, index, idEvent, onPublish, onC
         <div
             ref={setNodeRef}
             style={style}
-            className="group flex items-center gap-2 bg-neutral-900/30 border border-neutral-800/50 rounded-lg px-2 py-1.5 hover:bg-neutral-800/40 hover:border-neutral-700 transition-all text-xs"
+            className="group flex items-center gap-2 bg-white dark:bg-neutral-900/30 border border-neutral-200 dark:border-neutral-800/50 rounded-lg px-2 py-1.5 hover:bg-neutral-50 dark:hover:bg-neutral-800/40 hover:border-neutral-300 dark:hover:border-neutral-700 transition-all text-xs"
         >
             <div {...attributes} {...listeners} className="cursor-move text-neutral-600 hover:text-neutral-400">
                 <GripVertical className="w-3 h-3" />
@@ -97,7 +97,7 @@ function SortableContactRow({ partenaire, presta, index, idEvent, onPublish, onC
                     href={`https://manager.event2one.com/filesmanager/employe.php?id_personne=${partenaire.contact.id_contact}&personne_type=contact`}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="text-white font-medium hover:text-emerald-400 transition-colors truncate text-xs"
+                    className="text-neutral-900 dark:text-white font-medium hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors truncate text-xs"
                 >
                     {partenaire.contact.prenom} <span className="uppercase">{partenaire.contact.nom}</span>
                 </a>
@@ -117,7 +117,7 @@ function SortableContactRow({ partenaire, presta, index, idEvent, onPublish, onC
             </div>
             <div className="hidden md:flex flex-col min-w-0 max-w-[150px]">
                 <div className="flex items-center gap-1">
-                    <span className="text-neutral-400 truncate text-[11px]">{partenaire.contact.societe}</span>
+                    <span className="text-neutral-500 dark:text-neutral-400 truncate text-[11px]">{partenaire.contact.societe}</span>
                     {presta && (
                         <Button
                             size="sm"
@@ -221,6 +221,10 @@ const AdminPage: React.FC<AdminPageProps> = (props) => {
     const [isEditPrestaDialogOpen, setIsEditPrestaDialogOpen] = useState(false);
     const [editingPresta, setEditingPresta] = useState<Presta | null>(null);
     const [isUpdatingPresta, setIsUpdatingPresta] = useState(false);
+
+    // Screen Preview Panel State
+    const [showScreenPanel, setShowScreenPanel] = useState(false);
+    const [previewScreenId, setPreviewScreenId] = useState<number>(1);
 
     const sensors = useSensors(useSensor(PointerSensor));
 
@@ -447,7 +451,7 @@ const AdminPage: React.FC<AdminPageProps> = (props) => {
     };
 
     useEffect(() => {
-        socketRef.current = io('http://localhost:3000');
+        socketRef.current = io('http://localhost:3001');
         const socket = socketRef.current;
         socket.emit('dire_bonjour', { my: 'Bonjour server, je suis admin' });
         socket.on('connect', () => socket.emit('check_connexion', { name: 'admin' }));
@@ -460,7 +464,7 @@ const AdminPage: React.FC<AdminPageProps> = (props) => {
 
     return (
         <AdminLayout>
-            <div className="min-h-screen bg-linear-to-br from-neutral-950 via-neutral-900 to-neutral-950">
+            <div className="min-h-screen bg-neutral-50 dark:bg-linear-to-br dark:from-neutral-950 dark:via-neutral-900 dark:to-neutral-950">
                 <div className="sticky top-0 z-10 backdrop-blur-xl bg-neutral-900/90 border-b border-neutral-800">
                     <div className="container mx-auto px-4 py-2">
                         <div className="flex items-center justify-between">
@@ -489,8 +493,19 @@ const AdminPage: React.FC<AdminPageProps> = (props) => {
                                         className="h-7 w-40 pl-8 text-xs bg-neutral-800 border-neutral-700 focus:ring-emerald-600 text-white placeholder:text-neutral-500"
                                     />
                                 </div>
-                                <Button variant="outline" size="sm" onClick={() => display('177820', 'https://www.event2one.com/screen_manager/content/blank.php', 9)} className="h-7 text-xs border-neutral-700 hover:bg-neutral-800">
+                                <Button variant="outline" size="sm" onClick={() => display('177820', 'https://www.event2one.com/screen_manager/content/blank.php', 9)}
+
+                                    className="h-7 text-xs border-neutral-700 hover:bg-neutral-800 bg-neutral-800 hover:text-white hover:border-neutral-600  ">
                                     <EyeOff className="w-3 h-3 mr-1" />Masquer titrage
+                                </Button>
+                                <Button
+                                    variant="outline"
+                                    size="sm"
+                                    onClick={() => setShowScreenPanel(true)}
+                                    className="h-7 text-xs border-neutral-700 bg-neutral-800 hover:bg-neutral-800 hover:text-white hover:border-neutral-600 hover:shadow-lg hover:shadow-neutral-600"
+                                >
+                                    <Monitor className="w-3 h-3 mr-1" />
+                                    Voir les écrans
                                 </Button>
                                 <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
                                     <DialogTrigger asChild>
@@ -694,64 +709,117 @@ const AdminPage: React.FC<AdminPageProps> = (props) => {
                         </div>
                     </div>
                 </div>
-                <div className="container mx-auto px-4 py-2">
-                    <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
-                        <SortableContext items={partenaireList2.filter(p => {
-                            const term = searchTerm.toLowerCase();
-                            const contact = p.contact;
-                            return (
-                                contact.nom?.toLowerCase().includes(term) ||
-                                contact.prenom?.toLowerCase().includes(term) ||
-                                contact.societe?.toLowerCase().includes(term)
-                            );
-                        }).map(p => p.id_conferencier)} strategy={verticalListSortingStrategy}>
-                            <div className="space-y-0.5">
-                                {partenaireList2 && partenaireList2.filter(p => {
-                                    const term = searchTerm.toLowerCase();
-                                    const contact = p.contact;
-                                    return (
-                                        contact.nom?.toLowerCase().includes(term) ||
-                                        contact.prenom?.toLowerCase().includes(term) ||
-                                        contact.societe?.toLowerCase().includes(term)
-                                    );
-                                }).map((partenaire, index) => {
-                                    // Get the first prestation from the list
-                                    const presta = partenaire.contact.prestas_list?.[0];
-                                    if (!partenaire.contact) return null;
-                                    return (
-                                        <SortableContactRow
-                                            key={partenaire.id_conferencier}
-                                            partenaire={partenaire}
-                                            presta={presta}
-                                            index={index}
-                                            idEvent={idEvent}
-                                            onPublish={publishAllContent}
-                                            onClear={clearJuryScreens}
-                                            onHide={handleUpdateConferencier}
-                                            onEdit={handleEditPresta}
-                                        />
-                                    );
-                                })}
-
-
-                                {(!partenaireList2 || partenaireList2.length === 0) && (
-                                    <div className="flex items-center justify-center py-12">
-                                        <motion.svg width="60" height="60" viewBox="0 0 100 100" className="text-white">
-                                            <motion.path
-                                                d="M 50 10 L 90 35 L 75 80 L 25 80 L 10 35 Z"
-                                                fill="none"
-                                                stroke="currentColor"
-                                                strokeWidth="3"
-                                                initial={{ pathLength: 0 }}
-                                                animate={{ pathLength: [0, 1, 1, 0], rotate: [0, 0, 360, 360] }}
-                                                transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
+                <div className="flex relative">
+                    <div className="flex-1 container mx-auto px-4 py-2 transition-all duration-300">
+                        <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+                            <SortableContext items={partenaireList2.filter(p => {
+                                const term = searchTerm.toLowerCase();
+                                const contact = p.contact;
+                                return (
+                                    contact.nom?.toLowerCase().includes(term) ||
+                                    contact.prenom?.toLowerCase().includes(term) ||
+                                    contact.societe?.toLowerCase().includes(term)
+                                );
+                            }).map(p => p.id_conferencier)} strategy={verticalListSortingStrategy}>
+                                <div className="space-y-0.5">
+                                    {partenaireList2 && partenaireList2.filter(p => {
+                                        const term = searchTerm.toLowerCase();
+                                        const contact = p.contact;
+                                        return (
+                                            contact.nom?.toLowerCase().includes(term) ||
+                                            contact.prenom?.toLowerCase().includes(term) ||
+                                            contact.societe?.toLowerCase().includes(term)
+                                        );
+                                    }).map((partenaire, index) => {
+                                        // Get the first prestation from the list
+                                        const presta = partenaire.contact.prestas_list?.[0];
+                                        if (!partenaire.contact) return null;
+                                        return (
+                                            <SortableContactRow
+                                                key={partenaire.id_conferencier}
+                                                partenaire={partenaire}
+                                                presta={presta}
+                                                index={index}
+                                                idEvent={idEvent}
+                                                onPublish={publishAllContent}
+                                                onClear={clearJuryScreens}
+                                                onHide={handleUpdateConferencier}
+                                                onEdit={handleEditPresta}
                                             />
-                                        </motion.svg>
+                                        );
+                                    })}
+
+
+                                    {(!partenaireList2 || partenaireList2.length === 0) && (
+                                        <div className="flex items-center justify-center py-12">
+                                            <motion.svg width="60" height="60" viewBox="0 0 100 100" className="text-white">
+                                                <motion.path
+                                                    d="M 50 10 L 90 35 L 75 80 L 25 80 L 10 35 Z"
+                                                    fill="none"
+                                                    stroke="currentColor"
+                                                    strokeWidth="3"
+                                                    initial={{ pathLength: 0 }}
+                                                    animate={{ pathLength: [0, 1, 1, 0], rotate: [0, 0, 360, 360] }}
+                                                    transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
+                                                />
+                                            </motion.svg>
+                                        </div>
+                                    )}
+                                </div>
+                            </SortableContext>
+                        </DndContext>
+                    </div>
+
+                    {/* Screen Preview Side Panel */}
+                    <AnimatePresence>
+                        {showScreenPanel && (
+                            <motion.div
+                                initial={{ width: 0, opacity: 0 }}
+                                animate={{ width: 400, opacity: 1 }}
+                                exit={{ width: 0, opacity: 0 }}
+                                transition={{ type: 'spring', damping: 25, stiffness: 200 }}
+                                className="sticky top-[57px] h-[calc(100vh-57px)] bg-neutral-900 border-l border-neutral-800 shadow-2xl z-40 flex flex-col overflow-hidden"
+                            >
+                                <div className="flex items-center justify-between p-4 border-b border-neutral-800 min-w-[400px]">
+                                    <h2 className="text-white font-semibold flex items-center gap-2">
+                                        <Monitor className="w-4 h-4" />
+                                        Aperçu Écran
+                                    </h2>
+                                    <Button
+                                        variant="ghost"
+                                        size="sm"
+                                        onClick={() => setShowScreenPanel(false)}
+                                        className="h-8 w-8 p-0 text-neutral-400 hover:text-white hover:bg-neutral-800"
+                                    >
+                                        <X className="w-4 h-4" />
+                                    </Button>
+                                </div>
+                                <div className="p-4 space-y-4 flex-1 flex flex-col min-w-[400px]">
+                                    <div className="space-y-2">
+                                        <label className="text-sm text-neutral-400">Sélectionner un écran</label>
+                                        <select
+                                            value={previewScreenId}
+                                            onChange={(e) => setPreviewScreenId(Number(e.target.value))}
+                                            className="w-full bg-neutral-800 border border-neutral-700 rounded-md px-3 py-2 text-white text-sm focus:outline-none focus:ring-2 focus:ring-emerald-600"
+                                        >
+                                            {Array.from({ length: 50 }, (_, i) => i + 1).map((num) => (
+                                                <option key={num} value={num}>
+                                                    Écran {num}
+                                                </option>
+                                            ))}
+                                        </select>
                                     </div>
-                                )}
-                            </div>
-                        </SortableContext>
-                    </DndContext>
+                                    <div className="flex-1 bg-black rounded-lg overflow-hidden border border-neutral-800 relative">
+                                        <iframe
+                                            src={`http://localhost:3001/broadcast/screen/${previewScreenId}`}
+                                            className="absolute inset-0 w-full h-full border-0"
+                                            title={`Screen ${previewScreenId}`}
+                                        />
+                                    </div>
+                                </div>
+                            </motion.div>
+                        )}
+                    </AnimatePresence>
                 </div>
             </div>
         </AdminLayout >

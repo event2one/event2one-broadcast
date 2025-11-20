@@ -5,7 +5,7 @@ const https = require("https");
 const http = require("http");
 const fs = require("fs");
 const WebSocket = require("ws");
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 3001;
 const app = express();
 const path = require('path');
 const axios = require('axios');
@@ -28,7 +28,7 @@ try {
 
 const io = new Server(server, {
 	cors: {
-		origin: "http://localhost:3001",
+		origin: "http://localhost:3002",
 		methods: ["GET", "POST"]
 	}
 });
@@ -183,12 +183,12 @@ app.get('/', (req, res) => {
 	res.render('index');
 });
 
-app.get('/screen/:id', (req, res) => {
+app.get('/broadcast/screen/:id', (req, res) => {
 	const screenId = req.params.id;
 	res.render('screen', { screenId });
 });
 
-app.get('/event/:idEvent/admin/:idConfEvent', async (req, res) => {
+app.get('/broadcast/event/:idEvent/admin/:idConfEvent', async (req, res) => {
 	const { idEvent, idConfEvent } = req.params;
 
 	try {
