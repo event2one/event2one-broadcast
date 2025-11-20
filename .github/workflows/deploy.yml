@@ -1,0 +1,35 @@
+name: Deploy to Production
+
+on:
+  push:
+    branches: [ "main" ]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Deploy to Server via SSH
+      uses: appleboy/ssh-action@master
+      with:
+        host: ${{ secrets.SERVER_HOST }}
+        username: ${{ secrets.SERVER_USERNAME }}
+        key: ${{ secrets.SSH_PRIVATE_KEY }}
+        port: ${{ secrets.SSH_PORT || '22' }}
+        script: |
+          # Navigate to project directory
+          cd /var/www/broadcast
+
+          # Pull latest changes
+          git pull origin main
+
+          # Install Backend Dependencies
+          npm install
+
+          # Install Frontend Dependencies and Build
+          cd broadcast-app
+          npm install
+          npm run build
+          cd ..
+
+          # Restart PM2 processes
+          pm2 reload ecosystem.config.js

@@ -29,7 +29,7 @@ export interface Partner {
     id_contact?: string;
     conferencier_statut?: {
         id_event_contact_type: string;
-        color: string;
+        event_contact_type_color: string;
         libelle: string;
     };
 }

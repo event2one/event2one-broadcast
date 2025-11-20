@@ -105,7 +105,7 @@ function SortableContactRow({ partenaire, presta, index, idEvent, onPublish, onC
 
                 {partenaire.conferencier_statut && (
                     <Badge
-                        style={{ backgroundColor: partenaire.conferencier_statut.color }}
+                        style={{ backgroundColor: partenaire.conferencier_statut.event_contact_type_color }}
                         className="text-[10px] px-1 py-0 h-4"
                     >
                         {partenaire.conferencier_statut.libelle}
