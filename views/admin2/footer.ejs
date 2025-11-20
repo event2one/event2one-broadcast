@@ -1,0 +1,908 @@
+<script>
+ const socket = io();
+ 
+ const idEvent = <%= idEvent %>;
+
+ const idConfEvent = <%= idConfEvent %>;
+ 
+ const  confEventList = <%- confEventList %>;
+
+ const confEventContributionList = <%- confEventContributionList %>;
+
+ let  partenaireList = <%- partenaireList %>;
+
+ const prestaList = <%- prestaList %>;
+
+ const contactStatutList = <%- contactStatutList %>;
+
+ const eventContactTypeList = <%- eventContactTypeList %>;
+
+ 
+// const confEventList = JSON.parse(<%- confEventList %>);
+
+ //const confEventList = <%= confEventList %>;
+ 
+ //console.log('confEventContributionList', confEventContributionList);
+
+ 
+socket.emit('dire_bonjour', { my: 'Bonjour server,je suis admin' });
+
+socket.on("connection", (socket) => {
+    socket.broadcast.emit('check_connexion', { name: "ddddddddddddddddd" });
+});
+
+
+const send = function () {
+
+    const ije = 'ap1kZw';
+
+    console.log("done")
+    socket.emit('message', { my: 'Bonjour server,je suis message' });
+    socket.emit('check_connexion', { name: "ddddddddddddddddd", iframeSrc: `https://www.event2one.com/screen_manager/content/session_qrcode/?ije=${ije}`});
+}
+
+socket.on('message', function (data) {
+
+    console.log('Incoming message:', data);
+})
+
+
+const getJuryEventList = async ({ confEventList, confEventContributionList, partenaireList,
+     prestaList, contactStatutList, eventContactTypeList }) => {
+
+
+confEventList.map(confEvent => document.getElementById("juryEventSelect").innerHTML += `<option value = "${confEvent.jury_event.id_jury_event_enc}"> ${confEvent.conf_event_date} - ${confEvent.heure_debut} - ${confEvent.conf_event_lang.cel_titre}</option> `)
+confEventList.map(confEvent => document.getElementById("confEventSelect").insertAdjacentHTML('beforeend', `<option value = "${confEvent.id_conf_event}"> ${confEvent.conf_event_date} - ${confEvent.heure_debut} - ${confEvent.conf_event_lang.cel_titre}</option> `))
+confEventList.map(confEvent => document.getElementById("programme").innerHTML += `<div>
+
+            <div data-id_conf_event="${confEvent.id_conf_event}" class=" hidden">
+                <div class="whitespace-nowrap  pl-4 pr-3 text-sm font-medium text-gray-500 sm:pl-6"> ${confEvent.conf_event_date}  - ${confEvent.heure_debut}</div> 
+        <div class="text-white text-2xl pb-4 pt-1 pl-4  sm:pl-6"> ${confEvent.conf_event_lang.cel_titre}</div>
+        </div>
+            <div 
+        data-id_conf_event="${confEvent.id_conf_event}"
+        class="flex bg-neutral-950   hover:rounded text-white hidden">
+    
+        <div class="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
+            <button class="sessionQrcode border border-gray-700 text-white p-2 rounded text-xs" value="${confEvent.jury_event.id_jury_event_enc}" onClick="
+            display('${confEvent.jury_event.id_jury_event_enc}', 'https://www.event2one.com/screen_manager/content/blank.php'),
+            display('${confEvent.jury_event.id_jury_event_enc}', 'https://www.event2one.com/screen_manager/content/blank.php',6)"> <i class="fa-solid fa-screencast"></i> Transparent</button>
+            <button class="sessionQrcode border border-gray-700 text-white p-2 rounded text-xs" value="${confEvent.jury_event.id_jury_event_enc}" onClick="display('${confEvent.jury_event.id_jury_event_enc}', 'https://www.event2one.com/screen_manager/content/session_qrcode/?ije=${confEvent.jury_event.id_jury_event_enc}')"> <i class="fa-solid fa-screencast"></i> Qrcode app</button>
+            <button class="sessionQrcode border border-gray-700 text-white p-2 rounded text-xs" value="${confEvent.jury_event.id_jury_event_enc}" onClick="display('${confEvent.jury_event.id_jury_event_enc}', 'https://www.event2one.com/screen_manager/content/session_qrcode/?ije=${confEvent.jury_event.id_jury_event_enc},route=techxplorateur', 10)"> <i class="fa-solid fa-screencast"></i> Qrcode techxploration</button>
+            <button class="sessionQrcode border border-gray-700 text-white p-2 rounded text-xs"  value="${confEvent.jury_event.id_jury_event_enc}" onClick="display('${confEvent.jury_event.id_jury_event_enc}','https://www.event2one.com/screen_manager/content/candidat/?ie=${idEvent}&iclList=1261,3039,2294,2304,951,1272&rapport=y')">Rapport Tech'xplo.</button>
+            <button class="sessionQrcode border border-gray-700 text-white p-2 rounded text-xs" value="${confEvent.jury_event.id_jury_event_enc}" onClick="display('${confEvent.jury_event.id_jury_event_enc}','https://www.event2one.com/screen_manager/content/contacts/?ije=${confEvent.jury_event.id_jury_event}&id_event=${idEvent}&statut=jury,jure,coordinateur_jury',2)">Jury members</button>
+           
+            <button class="sessionQrcode border border-gray-700 text-white p-2 rounded text-xs" value="${confEvent.jury_event.id_jury_event_enc}" onClick="display('${confEvent.jury_event.id_jury_event_enc}','https://www.event2one.com/parcours/vote/classement_slide.php?id_event=${confEvent.id_event.id_event}&scroll=n&ij=${confEvent.jury_event.id_jury?.id_jury}&ije=${confEvent.jury_event.id_jury_event}')">Classement</button>
+            <button class="sessionQrcode border border-gray-700 text-white p-2 rounded text-xs" value="${confEvent.jury_event.id_jury_event_enc}" onClick="display('${confEvent.jury_event.id_jury_event_enc}', 'https://www.event2one.com/screen_manager/content/titrage_conf_event_fixed/?id_conf_event=${confEvent.id_conf_event}',6)"> <i class="fa-solid fa-screencast"></i> Titre de la session </button>
+            <button class="sessionQrcode border border-gray-700 text-white p-2 rounded text-xs" value="${confEvent.jury_event.id_jury_event_enc}" onClick="display('${confEvent.jury_event.id_jury_event_enc}', 'https://www.event2one.com/screen_manager/content/event/?id_event=${confEvent.id_event.id_event}&content=logo',17)"> <i class="fa-solid fa-screencast"></i>  Logo de l'événement</button>
+            <button class="sessionQrcode border border-gray-700 text-white p-2 rounded text-xs" value="${confEvent.jury_event.id_jury_event_enc}" onClick="display('${confEvent.jury_event.id_jury_event_enc}', 'https://www.event2one.com/screen_manager/content/event/?id_event=${confEvent.id_event.id_event}&content=infos_pratiques',18)"> <i class="fa-solid fa-screencast"></i>  événement - infos pratiques</button>
+            <button class="sessionQrcode border border-gray-700 text-white p-2 rounded text-xs" value="${confEvent.jury_event.id_jury_event_enc}" onClick="display('${confEvent.jury_event.id_jury_event_enc}', 'https://www.event2one.com/screen_manager/content/contacts/?ije=${confEvent.jury_event.id_jury_event}&id_event=${confEvent.id_event.id_event}&content=contactCycleLangLogos&perPage=1',24)"> <i class="fa-solid fa-screencast"></i> Logos -  Contacts des plans d'actions</button>
+                        <button class="sessionQrcode border border-gray-700 text-white p-2 rounded text-xs" value="${confEvent.jury_event.id_jury_event_enc}" onClick="display('${confEvent.jury_event.id_jury_event_enc}', 'https://www.event2one.com/screen_manager/content/contacts/?ije=${confEvent.jury_event.id_jury_event}&id_event=${confEvent.id_event.id_event}&content=contactCycleLangPhotos&perPage=1',25)"> <i class="fa-solid fa-screencast"></i> Photos -  Contacts des plans d'actions</button>
+            <div class="btn-group bg-zinc-800">
+                <button type="button" class="btn btn-secondary dropdown-toggle bg-gray-700 b-none p-2 text-sm" data-bs-toggle="dropdown" aria-expanded="false">Candidats</button>
+                <ul id="candidats_${confEvent.jury_event.id_jury_event}" class="dropdown-menu bg-zinc-800 divide-y divide-zinc-600 p-1 shadow-lg"></ul>
+            </div>
+
+            <div class="btn-group bg-zinc-800 hidden">
+                <button type="button" class="btn btn-secondary dropdown-toggle bg-gray-700 b-none p-2 text-sm" data-bs-toggle="dropdown" aria-expanded="false">Autres participants</button>
+                <ul id="participants_${confEvent.id_conf_event}" class="dropdown-menu bg-zinc-800 divide-y divide-zinc-600 p-1 shadow-lg"></ul>
+            </div>
+            
+            <div class="btn-group bg-zinc-800 hidden ">
+                <button type="button" class="btn btn-secondary dropdown-toggle bg-gray-700 b-none p-2 text-sm" data-bs-toggle="dropdown" aria-expanded="false">Contributions</button>
+                <ul id="questions_${confEvent.id_conf_event}" class="dropdown-menu bg-zinc-800 divide-y divide-zinc-600 p-1 shadow-lg">
+                
+                ${getQuestions({ confEvent, confEventContributionList })}</ul>
+            </div>
+
+        </div>
+    </div>
+
+
+
+
+    <table 
+    class="hidden  p-10 w-100" 
+    id="contributions_container_${confEvent.id_conf_event}"
+    data-id_conf_event="${confEvent.id_conf_event}">
+   
+    <tbody class="divide-y divide-neutral-500">
+    <tr>
+        <td colspan="6">    
+            <h2 class="text-white py-4 text-2xl">Contributions</h2>
+        </td>
+        </tr>
+        <tr class="divide-x text-white ">
+            <td>#</td>
+            <td>Nom</td>
+            <td>Pays</td>
+            <td>Statuts</td>
+            <td>Contact</td>
+            <td>Société</td>
+            <td>Type</td>
+            <td>CVid</td>
+            <td>CVis</td>
+            <td>DVid</td> 
+            <td>DVis</td>
+
+            <td></td>
+        </tr>
+        ${displayConfEventContributionList({ confEventContributionList, confEvent, prestaList, contactStatutList })}
+    </tbody>
+</table>
+
+
+
+
+
+<table 
+    class="hidden  p-10 w-100" 
+    id="intervenants_container_${confEvent.id_conf_event}"
+    data-id_conf_event="${confEvent.id_conf_event}">
+   
+       <tbody class="divide-y divide-neutral-800" id="jury_partenaires_list_${confEvent.id_conf_event}">
+    <tr class="no-sort">
+        <td colspan="6">    
+            <h2 class="text-white py-4 text-2xl">Intervenants</h2>
+            <button class="mb-3 sessionQrcode bg-neutral-500  border-4 border-gray-700 text-white p-2 rounded-full text-sm" value="${confEvent.id_conf_event}" onClick="display('${confEvent.id_conf_event}', 'https://www.event2one.com/screen_manager/content/blank.php',9)"> <i class="fa-solid fa-screencast"></i> Masquer le titrage </button>
+            <button class="mb-3 bg-neutral-500  border-4 border-gray-700 text-white p-2 rounded-full text-sm" value="${confEvent.id_conf_event}" onClick="addIntervenant('${confEvent.id_conf_event}')"> Ajouter un intervenant</button>
+        </td>
+        </tr>
+        <tr class="text-gray-200 no-sort">
+            <td></td>
+            <td>Photo</td>
+          <td>Contact</td>
+            <td>Société</td>
+            <td>rôle</td>
+            <td>Pays</td>
+            <td>Coord.</td>
+            <td>Logo</td>
+              <td>Punchline</td>
+            <td>Vidéo/visuel</td>
+            <td>Action</td>
+
+        </tr>
+
+        ${getPartenaires2({ confEvent,  partenaireList: partenaireList.filter(partenaire => partenaire.conferencier_statut.id_event_contact_type != "358"), idEvent, prestaList })}
+ 
+    </tbody>
+</table>
+ 
+<dialog id="add-contact-dialog-${confEvent.id_conf_event}"
+    class="add-contact-dialog bg-neutral-800 text-white p-6 rounded-lg shadow-xl w-full max-w-4xl backdrop:bg-black/50 backdrop:backdrop-blur-sm">
+    
+    <h3 class="text-xl font-semibold mb-4">Ajouter un intervenant</h3>
+
+    <!-- Conteneur pour afficher le contact sélectionné -->
+     <div id="selected-contact-info-${confEvent.id_conf_event}" class="hidden items-center p-3 my-4 rounded-lg border-x border-y  border-emerald-500 bg-emerald-900/20">     
+        <!-- Le contenu sera injecté par JavaScript -->
+    </div>
+
+    <div class="space-y-4">
+        <select 
+            name="statut" 
+            id="statut-select-${confEvent.id_conf_event}" 
+            class="statut-select w-full bg-neutral-700 border-x border-y  border-neutral-600 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-sky-500"
+            onchange="setSelectedIdEventContactType(this.value, '${confEvent.id_conf_event}')">
+            <option value="">Sélectionner un statut</option>
+            ${eventContactTypeList.map(eventContactType => {
+                return `<option value="${eventContactType.id_event_contact_type}">${eventContactType.libelle}</option>`
+            }).join('')}
+        </select>
+        <input 
+            oninput="searchContacts(this.value, '${confEvent.id_conf_event}', 'intervenant')"
+            type="text" 
+            placeholder="Rechercher un contact..." 
+            class="w-full bg-neutral-700 border-x border-y  border-neutral-600 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-sky-500" />
+        <div 
+        id="search-results-${confEvent.id_conf_event}" 
+        class="max-h-48 overflow-y-auto divide-y divide-neutral-600"></div>
+
+        <input id="statut-select-hidden-${confEvent.id_conf_event}" type="hidden" value=""/>
+        <input id="id_conf_event_hidden-${confEvent.id_conf_event}" type="hidden" value="${confEvent.id_conf_event}"/>   
+        <input id="id-contact-hidden-${confEvent.id_conf_event}" type="hidden" value=""/>
+    </div>
+ 
+
+    <div class="mt-6 flex justify-end items-center space-x-3">
+        <!-- Loader (initialement masqué) -->
+        <div id="loader-${confEvent.id_conf_event}" class="hidden text-sm text-gray-400 flex items-center">
+            <svg class="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            </svg>
+            Création en cours...
+        </div>
+        <!-- Boutons -->
+        <button id="cancel-btn-${confEvent.id_conf_event}" onclick="document.getElementById('add-contact-dialog-${confEvent.id_conf_event}').close()" class="px-4 py-2 bg-neutral-600 rounded hover:bg-neutral-500">Annuler</button>
+        <button 
+            id="save-btn-${confEvent.id_conf_event}"
+            onclick="handleSaveContact('${confEvent.id_conf_event}')"
+            class="px-4 py-2 bg-sky-600 rounded hover:bg-sky-500 hidden">Sauvegarder</button>
+    </div>
+
+</dialog>
+
+
+     <table class=" hidden divide-y divide-neutral-500 min-w-full" 
+    data-id_conf_event="${confEvent.id_conf_event}" 
+    id="candidatsFixedMode_${confEvent.id_conf_event}">
+
+    <thead class="text-white">
+        <tr><td colspan="9"> 
+            <h2 class="text-white py-4 text-2xl">Candidats</h2>
+            <button class="mb-3 bg-neutral-500  border-4 border-gray-700 text-white p-2 rounded-full text-sm" value="${confEvent.id_conf_event}" onClick="showCandidatModal('${confEvent.id_conf_event}')"> Ajouter un candidat</button>
+            </td>
+        </tr>          
+        <tr>
+            <th>#</th>
+            <th>Société</th>
+            <th>Contact</th>
+            <th></th>
+            <th>Solution</th>
+            <th>Pays</th>
+            <th>Coord.</th>
+            <th>Vidéo</th>
+            <th>visuel</th>
+            <th></th>
+        </tr>
+
+        </thead>
+    <tbody class="divide-y divide-neutral-500">
+
+    </tbody>
+     </table>
+
+     <dialog id="add-candidat-dialog-${confEvent.id_conf_event}"
+    class="add-candidat-dialog bg-neutral-800 text-white p-6 rounded-lg shadow-xl w-full max-w-4xl backdrop:bg-black/50 backdrop:backdrop-blur-sm">
+    
+    <h3 class="text-xl font-semibold mb-4">Ajouter un candidat</h3>
+
+        <!-- Conteneur pour afficher le candidat sélectionné -->
+    <div id="selected-candidat-info-${confEvent.id_conf_event}" class="hidden items-center p-3 my-4 rounded-lg border-x border-y border-emerald-500/50 bg-emerald-900/20">
+        <!-- Le contenu sera injecté par JavaScript -->
+    </div>
+
+
+    <div class="space-y-4">
+        <input 
+            oninput="searchContacts(this.value, '${confEvent.id_conf_event}', 'candidat')"
+            type="text" 
+            placeholder="Rechercher un candidat..." 
+            class="w-full bg-neutral-700 border-x border-y  border-neutral-600 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-sky-500" />
+        <div 
+        id="search-candidat-results-${confEvent.id_conf_event}" 
+        class="max-h-48 overflow-y-auto divide-y divide-neutral-600"></div>
+
+        <input id="id_candidat_hidden-${confEvent.id_conf_event}" type="hidden" value=""/>
+
+
+    <input id="id_conf_event_candidat_hidden-${confEvent.id_conf_event}" type="hidden" value="${confEvent.id_conf_event}"/ >
+
+
+
+
+    <button class="close-dialog absolute top-2 right-2 text-gray-400 hover:text-white" 
+        onclick="document.getElementById('add-candidat-dialog-${confEvent.id_conf_event}').close()">
+       Fermer
+        </button>
+
+
+    </dialog>
+
+    </div>
+` );
+
+confEventList.map(confEvent => getJuryDemoList(confEvent));
+
+     confEventList.forEach(confEvent => {
+        const tableBodyId = `jury_partenaires_list_${confEvent.id_conf_event}`;
+        // On s'assure que le code s'exécute après le rendu du DOM
+        // setTimeout est une bonne pratique pour cela.
+        setTimeout(() => initSortablePartenaires(tableBodyId), 0);
+    });
+ 
+
+ 
+}
+
+const getJuryDemoList = async (confEvent) => {
+
+    const response = await fetch(`https://www.mlg-consulting.com/smart_territory/form/api.php?action=getJuryDemoList&params= WHERE id_jury=${confEvent.jury_event?.id_jury?.id_jury}`)
+        .then(response => response.json())
+        .then(response => {
+
+            document.getElementById(`candidats_${confEvent.jury_event.id_jury_event}`).innerHTML = response
+                .sort(function (a, b) { return a.ordre_passage - b.ordre_passage })
+                .filter(juryDemo => juryDemo.is_nomine == "1" && juryDemo.is_visible == "1")
+                .map(juryDemo => ` 
+    <li class="group  hover:bg-neutral-800">
+		<a class="dropdown-item hover:bg-zinc-700" title="${juryDemo.id_jury_demo}"  
+		style="cursor:pointer"
+		onClick="display('${confEvent.jury_event.id_jury_event_enc}','https://www.event2one.com/screen_manager/content/candidat/?ie=${idEvent}&iclList=1261,3039,2294,2304,951,1272&rapport=n&id_jury_demo=${juryDemo.id_jury_demo}')">
+			<div class="flex justify-between"> 
+				
+				<div class="flex justify-start">	
+					<div class="rounded-full bg-gray-700 text-white  w-8 h-8 flex justify-center items-center mx-2">${juryDemo.ordre_passage}</div>
+					<div class="text-white">${juryDemo.presta.id_contact.nom} - ${juryDemo.presta.id_contact.societe} - ${juryDemo.presta.presta_nom}</div>
+				</div>
+				<img src="${juryDemo.presta.visuels.small}" alt="" class="w-6 h-6 rounded-full">
+			</div> 
+		</a>
+		
+		<div class="flex">
+		
+				<a class="dropdown-item hover:bg-zinc-600  text-white  rounded-full bg-zinc-500 mx-5" title="${juryDemo.id_jury_demo}"  
+		style="cursor:pointer"
+		onClick="display('${confEvent.jury_event.id_jury_event_enc}','https://www.event2one.com/screen_manager/content/candidat/?ie=${idEvent}&iclList=1261,3039,2294,2304,951,1272&rapport=n&id_jury_demo=${juryDemo.id_jury_demo}',1)">
+			<div class="flex justify-between items-center"> 
+				
+				<div class="flex justify-start">	
+					<div class="group-hover:text-sky-700 ml-3">
+						<i class="bi bi-cast text-2xl pr-2"></i>
+					</div> presentation
+				</div>
+			</div> 
+		</a>
+		
+		
+				<a class="items-center dropdown-item hover:bg-zinc-600 text-white  rounded-full bg-zinc-500 mx-5" title="${juryDemo.id_jury_demo}"  
+		style="cursor:pointer"
+		onClick="display('${confEvent.jury_event.id_jury_event_enc}','https://www.event2one.com/screen_manager/content/demo_video_presentation/?ie=${idEvent}&iclList=1261,3039,2294,2304,951,1272&rapport=n&id_jury_demo=${juryDemo.id_jury_demo}',4)">
+	 Video presentation
+		</a>
+		
+		</div>
+	</li>
+`).join('')
+
+// `candidatsFixedMode_${confEvent.id_conf_event}` first tbody
+
+
+let tbody = document.querySelector(`#candidatsFixedMode_${confEvent.id_conf_event} tbody`);
+
+tbody.insertAdjacentHTML('beforeend', response
+                .sort(function (a, b) { return a.ordre_passage - b.ordre_passage })
+                .filter(juryDemo => juryDemo.is_nomine == "1" && juryDemo.is_visible == "1")
+                .map(juryDemo => ` 
+    <tr 
+    class="group  hover:bg-neutral-900 text-gray-400 text-sm py-1"
+    data-id="${juryDemo.id_jury_demo}"  
+    >
+    <td> 
+           <div class="flex items-center text-white py-1">
+            <span class="drag-handle cursor-move pr-2 text-gray-500">☰</span>
+            <span class="order-display">#${juryDemo.ordre_passage}</span>
+        </div>
+      
+    </td>
+    <td>${juryDemo.presta.id_contact.societe}</td>
+    <td>
+        <a 
+        href="https://manager.event2one.com/filesmanager/employe.php?id_personne=${juryDemo.presta.id_contact.id_contact}&personne_type=contact" 
+        target="_blank"
+        class="underline text-blue-400">
+        
+        ${juryDemo.presta.id_contact.prenom} 
+          
+        <span class="uppercase font-bold">${juryDemo.presta.id_contact.nom}</span>
+        
+        </a>
+     
+        </td>
+    <td>
+        <div class="w-6 h-6">
+            <img src="${juryDemo.presta.visuels.small}" alt="" class="w-6 h-6 rounded-full">
+        </div>
+        </td>
+    <td class="text-xs">
+        <a 
+        target="_blank"
+        href="https://www.mlg-consulting.com/manager_cc/prestations/content_action.php?id_presta=${juryDemo.presta.id_presta}" 
+        class="underline text-blue-400">
+        ${juryDemo.presta.presta_nom.substring(0,100)} (<span class="text-xs italic">id: ${juryDemo.presta.id_presta}</span>)
+        </a>
+        </td>
+    <td> 
+        <div class="flex space-x-3 text-xs text-neutral-400">
+            <div>
+                <img src="${juryDemo.presta.id_contact.flag}" class="h-4 w-4 rounded">
+            </div> 
+            <span>${juryDemo.presta.id_contact.pays} </span>
+        </div>
+        </td>
+        <td>${juryDemo.presta.id_contact.auteur ? `${juryDemo.presta.id_contact.auteur?.prenom} <span class="uppercase">${juryDemo.presta.id_contact.auteur?.nom}</span>` : ''}</td>
+        <td class="text-center">${IsState(
+            juryDemo.presta.video_url !='' 
+            || !['https://www.mlg-consulting.com/manager_cc/docs/archives/', ''].includes(juryDemo.presta.video_hosted) 
+            || juryDemo.presta.id_contact.organisme_video_url !=""
+            || !['https://www.mlg-consulting.com/manager_cc/docs/archives/', '', '[object Object]', '0'].includes(juryDemo.presta.id_contact.organisme_video_hosted)
+            
+        ) }
+            <ul class="hidden">
+                <li>juryDemo.presta.id_contact.organisme_video_url : ${juryDemo.presta.id_contact.organisme_video_url}</li>
+                <li>juryDemo.presta.id_contact.organisme_video_hosted : ${juryDemo.presta.id_contact.organisme_video_hosted}</li>
+                <li>juryDemo.presta.video_hosted  : ${juryDemo.presta.video_hosted}</li>
+                <li>juryDemo.presta.video_url  : ${juryDemo.presta.video_url}</li>
+            </ul>
+        </td>
+        <td class="text-center">${IsState(!juryDemo.presta.presta_visuel.includes("no_picture"))}
+            
+            <span class="hidden">${juryDemo.presta.presta_visuel}</div>
+            </td>
+		<td>
+        <div class="flex space-x-2">
+            <a class="text-xs  items-center whitespace-nowrap px-2 py-1 hover:bg-zinc-600 text-white  rounded-full bg-emerald-900 mx-1 " title="${juryDemo.id_jury_demo}"  
+		style="cursor:pointer"
+		onClick="
+        display('${confEvent.jury_event.id_jury_event_enc}','https://www.event2one.com/screen_manager/content/candidat/?ie=${idEvent}&iclList=1261,3039,2294,2304,951,1272&rapport=n&id_jury_demo=${juryDemo.id_jury_demo}',1), 
+        display('${confEvent.jury_event.id_jury_event_enc}','https://www.event2one.com/screen_manager/content/demo_video_presentation/?ie=${idEvent}&iclList=1261,3039,2294,2304,951,1272&rapport=n&id_jury_demo=${juryDemo.id_jury_demo}',4),
+        display('${confEvent.jury_event.id_jury_event_enc}','https://www.event2one.com/screen_manager/content/titrage_participant/?id_contact=${juryDemo.presta.id_contact.id_contact}&id_conf_event=${confEvent.id_conf_event}',9),
+        display('${confEvent.jury_event.id_jury_event_enc}','https://www.event2one.com/screen_manager/content/expectation/?id_contact=${juryDemo.presta.id_contact.id_contact}&ie=${idEvent}&ip=${juryDemo.presta.id_presta}',3),
+         display('', 'https://www.event2one.com/screen_manager/content/contact_video_presentation/?id_contact=${juryDemo.presta.id_contact.id_contact}',13),
+                display('', 'https://www.event2one.com/screen_manager/content/organisme_video_presentation/?id_contact=${juryDemo.presta.id_contact.id_contact}',14),
+                display('', 'https://www.event2one.com/screen_manager/content/contact_website/?id_contact=${juryDemo.presta.id_contact.id_contact}',15),
+                display('', 'https://www.event2one.com/screen_manager/content/contact/?id_contact=${juryDemo.presta.id_contact.id_contact}&content=logo',16),
+                display('', 'https://www.event2one.com/screen_manager/content/contact/?id_contact=${juryDemo.presta.id_contact.id_contact}&content=photo',18),
+                display('', 'https://www.event2one.com/screen_manager/content/contact/?id_contact=${juryDemo.presta.id_contact.id_contact}&content=cycle_lang_presentation',20),
+                display('', 'https://www.event2one.com/screen_manager/content/contact/?id_contact=${juryDemo.presta.id_contact.id_contact}&content=leviers',23),
+                display('', 'https://www.event2one.com/screen_manager/content/contact/?id_contact=${juryDemo.presta.id_contact.id_contact}&content=raison_sociale',22),
+                display('', 'https://www.event2one.com/screen_manager/content/demo_video_presentation/?ie=${idEvent}&id_presta=${juryDemo.presta?.id_presta}',4),
+                display('', 'https://www.event2one.com/screen_manager/content/demo_video_presentation/?ie=${idEvent}&id_presta=${juryDemo.presta?.id_presta}&content=visuel',26),
+                display('', 'https://www.event2one.com/screen_manager/content/demo_video_presentation/?ie=${idEvent}&id_presta=${juryDemo.presta?.id_presta}&content=fond-generique',30),
+                display('', 'https://www.event2one.com/screen_manager/content/titrage_participant/?id_contact=${juryDemo.presta.id_contact.id_contact}&ie=${idEvent}&',9),
+                display('', 'https://www.event2one.com/screen_manager/content/contact_qrcode/?id_contact=${juryDemo.presta.id_contact.id_contact}',8),
+                display('', 'https://www.event2one.com/screen_manager/content/expectation/?ie=${idEvent}&id_contact=${juryDemo.presta.id_contact.id_contact}&content=invest',23),
+                display('', 'https://www.event2one.com/screen_manager/content/expectation/?ie=${idEvent}&id_contact=${juryDemo.presta.id_contact.id_contact}&content=landing_services',27),
+                display('', 'https://www.event2one.com/screen_manager/content/expectation/?ie=${idEvent}&id_contact=${juryDemo.presta.id_contact.id_contact}&content=landing_chanels',28),
+                display('', 'https://www.event2one.com/screen_manager/content/expectation/?ie=${idEvent}&id_contact=${juryDemo.presta.id_contact.id_contact}&content=pays',29),
+                display('', 'https://www.event2one.com/screen_manager/content/demo_video_presentation/?ie=${idEvent}&id_presta=${juryDemo.presta.id_presta}&content=titrage-intervenant&target=obs',31),
+                display('', 'https://www.event2one.com/screen_manager/content/demo_video_presentation/?ie=${idEvent}&id_presta=${juryDemo.presta.id_presta}&content=incrustation-video&target=obs',32),
+                display('', 'https://www.event2one.com/screen_manager/content/demo_video_presentation/?ie=${idEvent}&id_presta=${juryDemo.presta.id_presta}&content=incrustation-titre&target=obs',33),
+                display('', 'https://www.event2one.com/screen_manager/content/demo_video_presentation/?ie=${idEvent}&id_presta=${juryDemo.presta.id_presta}&content=incrustation-visuel&target=obs',34),
+                display('', 'https://www.event2one.com/screen_manager/content/demo_video_presentation/?ie=${idEvent}&id_presta=${juryDemo.presta.id_presta}&content=presta-visuel-full&target=obs',35)">
+        Publier
+		</a>
+
+
+            <a class="hidden text-xs items-center whitespace-nowrap px-2 py-1 hover:bg-zinc-600 text-white  rounded-full bg-neutral-900 mx-1 " title="${juryDemo.id_jury_demo}"  
+		style="cursor:pointer"
+		onClick="display('${confEvent.jury_event.id_jury_event_enc}','https://www.event2one.com/screen_manager/content/candidat/?ie=${idEvent}&iclList=1261,3039,2294,2304,951,1272&rapport=n&id_jury_demo=${juryDemo.id_jury_demo}',1)">
+        Fiche
+		</a>
+
+		<a class="hidden text-xs items-center whitespace-nowrap px-2 py-1 hover:bg-zinc-600 text-white  rounded-full bg-neutral-900 mx-1 " title="${juryDemo.id_jury_demo}"  
+		style="cursor:pointer"
+		onClick="display('${confEvent.jury_event.id_jury_event_enc}','https://www.event2one.com/screen_manager/content/demo_video_presentation/?ie=${idEvent}&iclList=1261,3039,2294,2304,951,1272&rapport=n&id_jury_demo=${juryDemo.id_jury_demo}',4)">
+	 Video/visuel
+		</a>
+
+
+ 
+
+        <a class="hidden  text-xs  items-center whitespace-nowrap px-2 py-1 hover:bg-zinc-600 text-white  rounded-full bg-neutral-900 mx-1 " title="${juryDemo.id_jury_demo}"  
+		style="cursor:pointer"
+		onClick="display('${confEvent.jury_event.id_jury_event_enc}','https://www.event2one.com/screen_manager/content/expectation/?id_contact=${juryDemo.presta.id_contact.id_contact}',3)">
+       leviers
+		</a>
+
+
+        <a class="hidden text-xs  items-center whitespace-nowrap px-2 py-1 hover:bg-zinc-600 text-white  rounded-full bg-neutral-900 mx-1 " title="${juryDemo.id_jury_demo}"  
+		style="cursor:pointer"
+		onClick="display('${confEvent.jury_event.id_jury_event_enc}','https://www.event2one.com/screen_manager/content/contact_qrcode/?id_contact=${juryDemo.presta.id_contact.id_contact}',8), display('${confEvent.jury_event.id_jury_event_enc}','https://www.event2one.com/screen_manager/content/demo_video_presentation/?ie=${idEvent}&iclList=1261,3039,2294,2304,951,1272&rapport=n&id_jury_demo=${juryDemo.id_jury_demo}',4)">
+       Qrcode presentation
+		</a>
+
+        <a class="text-xs  items-center whitespace-nowrap px-2 py-1 hover:bg-zinc-600 text-white  rounded-full bg-neutral-900 mx-1 " title="${juryDemo.id_jury_demo}"  
+		style="cursor:pointer"
+		onClick="
+        display('${confEvent.jury_event.id_jury_event_enc}','https://www.event2one.com/screen_manager/content/blank.php',1),
+        display('${confEvent.jury_event.id_jury_event_enc}','https://www.event2one.com/screen_manager/content/blank.php',4),
+        display('${confEvent.jury_event.id_jury_event_enc}','https://www.event2one.com/screen_manager/content/blank.php',9)">
+       Clear all
+		</a>
+
+
+</div>
+		</td>
+	</tr>
+`).join(''))
+
+ initSortableCandidats(tbody);
+
+        })
+}
+
+getJuryEventList({
+    confEventList, 
+    confEventContributionList, 
+    partenaireList,
+    prestaList, 
+    contactStatutList, 
+    eventContactTypeList });
+
+document.getElementById("juryEventSelect")
+    .addEventListener("change", function () {
+        console.log(this.value);
+        screenId = document.getElementById("screenSelector").value;
+        socket.emit('updateMediaContainer', { screenId: screenId, name: "ddddddddddddddddd", iframeSrc: `https://www.event2one.com/screen_manager/content/session_qrcode/?ije=${this.value}` });
+    });
+
+const btnList = document.querySelectorAll(".sessionQrcode");
+
+//console.log('btnList', btnList);
+
+const display = (id_jury_event_enc, src, canal) => {
+    screenId = document.getElementById("screenSelector").value;
+    socket.emit('updateMediaContainer', { screenId: canal ?? screenId, name: "ddddddddddddddddd", iframeSrc: src });
+}
+
+document.getElementById("screenSelector").addEventListener("change", function () {
+    console.log('v', this.value);
+    //privateMessage
+    socket.emit('privateMessage', { screenId: this.value, message: `Direct messenger ${this.value} WTF!!!` });
+
+});
+ 
+if(idConfEvent){
+
+var elements = document.querySelectorAll('[data-id_conf_event]');
+
+console.log('elements', elements);
+
+for (var i = 0; i < elements.length; i++) {
+    if (elements[i].getAttribute('data-id_conf_event') == idConfEvent) {
+        elements[i].classList.remove('hidden');
+    } else {
+        elements[i].classList.add('hidden');
+    }
+}
+
+}
+
+const showCandidatModal = (id_conf_event) => {
+    // Ouvre la boîte de dialogue spécifique à cet événement
+    const dialog = document.getElementById(`add-candidat-dialog-${id_conf_event}`);
+    dialog.showModal();
+}
+
+ 
+ const addIntervenant = (id_conf_event) => {
+    // Ouvre la boîte de dialogue spécifique à cet événement
+    const dialog = document.getElementById(`add-contact-dialog-${id_conf_event}`);
+    dialog.showModal();
+}
+
+const setSelectedIdContact = (contact, id_conf_event) => {
+     const id_contact = contact.id_contact;
+    console.log(`Tentative de sélection du contact ID: ${contact.id_contact} pour l'événement ID: ${id_conf_event}`);
+    
+    // 1. Vérifier la présence de l'input caché pour le contact
+    const hiddenContactInput = document.getElementById(`id-contact-hidden-${id_conf_event}`);
+    
+    if (hiddenContactInput) {
+        hiddenContactInput.value = id_contact;
+        console.log(`SUCCÈS: La valeur de #${hiddenContactInput.id} est maintenant :`, hiddenContactInput.value);
+    } else {
+        console.error(`ERREUR: Impossible de trouver l'élément avec l'ID #id-contact-hidden-${id_conf_event}`);
+    }
+
+        const infoContainer = document.getElementById(`selected-contact-info-${id_conf_event}`);
+    if (infoContainer) {
+        infoContainer.innerHTML = `
+            <div class="flex items-center">
+                <img src="${contact.photo}" alt="Photo" class="w-10 h-10 rounded-full mr-3">
+                <div>
+                     <div class="text-xs text-emerald-400 mb-1">CONTACT SÉLECTIONNÉ</div>
+                    <div class="font-bold">${contact.prenom} <span class="uppercase">${contact.nom}</span></div>
+                    <div class="text-sm text-gray-400">${contact.societe}</div>
+                </div>
+            </div>
+        `;
+        infoContainer.classList.remove('hidden');
+    }
+
+    // 2. Vérifier la sélection du statut
+    const statutSelect = document.getElementById(`statut-select-${id_conf_event}`);
+    if (!statutSelect || !statutSelect.value) {
+        alert('Veuillez sélectionner un statut avant d\'ajouter le contact.');
+        return;
+    }
+
+    //vider la liste des résultats de recherche 
+    document.getElementById(`search-results-${id_conf_event}`).innerHTML = '';
+
+     checkIfReadyToSave(id_conf_event);
+}
+
+
+const setSelectedIdCandidat = (contactData, id_conf_event) => {
+    const hiddenCandidatInput = document.getElementById(`id_candidat_hidden-${id_conf_event}`);
+    if (hiddenCandidatInput) {
+        hiddenCandidatInput.value = contactData.id_contact;
+        console.log(`Candidat sélectionné ID: ${contactData.id_contact}`);
+    }
+
+    // Afficher les informations du candidat sélectionné
+    const infoContainer = document.getElementById(`selected-candidat-info-${id_conf_event}`);
+    if (infoContainer) {
+        infoContainer.innerHTML = `
+            <div class="flex items-start">
+                <img src="${contactData.photo}" alt="Photo" class="w-12 h-12 rounded-full mr-4">
+                <div class="flex-grow">
+                     <div class="text-xs text-emerald-400 mb-1">CANDIDAT SÉLECTIONNÉ</div>
+                    <div class="font-bold text-lg">${contactData.prenom} <span class="uppercase">${contactData.nom}</span></div>
+                    <div class="text-sm text-gray-400">${contactData.societe}</div>
+             
+                    <div class="mt-4 pt-3 border-t border-neutral-700">
+                        <div class="text-gray-300 font-semibold mb-2">Choisissez une solution à ajouter :</div>
+                        <div class="space-y-2">
+                            ${contactData.presta_list && contactData.presta_list.length > 0 ? 
+                                contactData.presta_list.map(presta => `
+                                <div class="flex justify-between items-center p-2 rounded-md bg-neutral-900/50 hover:bg-neutral-700/80 transition-colors">
+                                    <div class="text-sm text-gray-300">${presta.presta_nom}</div>
+                                    <button 
+                                        class="flex items-center text-xs px-3 py-1 bg-sky-600 text-white rounded-full hover:bg-sky-500 transition-colors whitespace-nowrap"
+                                        onclick='handleAddCandidat("${id_conf_event}", "${contactData.id_contact}", "${presta.id_presta}")'
+                                    >
+                                        <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"></path></svg>
+                                        Positionner cette solution
+                                    </button>
+                                </div>
+                            `).join('') : 
+                            `<div class="text-sm text-gray-500 italic">Aucune solution trouvée pour ce contact.</div>`
+                            }
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+        infoContainer.classList.remove('hidden');
+    }
+
+    // Vider les résultats de la recherche
+    document.getElementById(`search-candidat-results-${id_conf_event}`).innerHTML = '';
+    
+    // Ici, vous pourriez activer un bouton "Sauvegarder" si nécessaire
+}
+
+
+
+const setSelectedIdEventContactType = (id_event_contact_type, id_conf_event) => {
+    console.log(`Tentative de sélection du type de contact ID: ${id_event_contact_type} pour l'événement ID: ${id_conf_event}`);
+
+    // Vérifier la présence de l'input caché pour le statut
+    const hiddenStatutInput = document.getElementById(`statut-select-hidden-${id_conf_event}`);
+
+    if (hiddenStatutInput) {
+        hiddenStatutInput.value = id_event_contact_type;
+        console.log(`SUCCÈS: La valeur de #${hiddenStatutInput.id} est maintenant :`, hiddenStatutInput.value);
+    } else {
+        console.error(`ERREUR: Impossible de trouver l'élément avec l'ID #statut-select-hidden-${id_conf_event}`);
+    }
+}   
+
+
+// Nouvelle fonction pour vérifier si les conditions sont remplies pour afficher le bouton "Ajouter"
+const checkIfReadyToSave = (id_conf_event) => {
+    const contactId = document.getElementById(`id-contact-hidden-${id_conf_event}`).value;
+    const statutId = document.getElementById(`statut-select-hidden-${id_conf_event}`).value;
+    const saveBtn = document.getElementById(`save-btn-${id_conf_event}`);
+
+    if (contactId && statutId) {
+        saveBtn.classList.remove('hidden');
+    } else {
+        saveBtn.classList.add('hidden');
+    }
+}
+
+
+const searchContacts = async (query, id_conf_event, searchType) => {
+    if (query.length < 3) {
+        const resultsContainerId = searchType === 'candidat' ? `search-candidat-results-${id_conf_event}` : `search-results-${id_conf_event}`;
+        document.getElementById(resultsContainerId).innerHTML = '';
+        return;
+    }
+
+    try {
+        const response = await fetch(`/api/search-contacts?q=${encodeURIComponent(query)}`);
+        if (!response.ok) throw new Error('Network response was not ok');
+        const contacts = await response.json();
+
+        let resultsContainerId;
+        let selectFunctionName;
+
+        if (searchType === 'candidat') {
+            resultsContainerId = `search-candidat-results-${id_conf_event}`;
+            selectFunctionName = 'setSelectedIdCandidat';
+        } else { // 'intervenant' par défaut
+            resultsContainerId = `search-results-${id_conf_event}`;
+            selectFunctionName = 'setSelectedIdContact';
+        }
+
+       const searchResultsContainer = document.getElementById(resultsContainerId);
+        searchResultsContainer.innerHTML = contacts.map(contact => {
+            // Créer un objet simple avec uniquement les données nécessaires
+            const contactData = {
+                id_contact: contact.id_contact,
+                prenom: contact.prenom,
+                nom: contact.nom,
+                societe: contact.societe,
+                photo: contact.photos.tiny,
+                // Gardez ceci comme un objet/tableau JavaScript natif
+                presta_list: contact.presta_list 
+            };
+
+            return `<div class="flex justify-between items-center py-1 hover:bg-neutral-700">
+                <div class="flex items-center">
+
+                
+                    <img src="${contact.photos.tiny}" alt="Photo de ${contact.prenom} ${contact.nom}" class="w-8 h-8 rounded-full mr-2 inline-block">
+                    <div>
+                        ${contact.prenom} <span class="uppercase font-bold">${contact.nom}</span> - ${contact.societe}
+                    </div>
+                </div>
+                <div>
+                    ${contact.certified == 1 ? `<span class="text-xs bg-green-600 text-white px-2 py-1 rounded">Certifié</span>` : ''}
+                    <button 
+                        class="ml-2 px-2 py-1 bg-sky-600 text-white rounded hover:bg-sky-500 text-xs"
+                        onclick='${selectFunctionName}(${JSON.stringify(contactData)}, "${id_conf_event}")'>Sélectionner</button>
+                </div>
+            </div>`;
+        }).join('');
+
+    } catch (error) {
+        console.error('Erreur lors de la recherche:', error);
+    }
+}
+
+
+const handleAddCandidat = async (id_conf_event, id_contact, id_presta) => {
+    try {
+        const response = await fetch('/api/add-candidat', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ 
+                id_event: idEvent,
+                id_conf_event, 
+                id_contact, 
+                id_presta, 
+                id_demo:id_presta
+            })
+        });
+
+        if (!response.ok) {
+            throw new Error(`Erreur du serveur: ${response.statusText}`);
+        }
+
+        const data = await response.json();
+        console.log('Candidat ajouté avec succès:', data);
+        alert('Candidat ajouté avec succès !');
+
+        // Fermer la boîte de dialogue
+        const dialog = document.getElementById(`add-candidat-dialog-${id_conf_event}`);
+        dialog.close();
+
+    } catch (error) {
+        console.error('Erreur lors de l\'ajout du candidat:', error);
+        alert('Une erreur est survenue. Veuillez réessayer.');
+    }
+}
+
+const handleSaveContact = async (id_conf_event) => {
+    const contactIdInput = document.getElementById(`id-contact-hidden-${id_conf_event}`);
+    const statutInput = document.getElementById(`statut-select-hidden-${id_conf_event}`);   
+    const id_contact = contactIdInput ? contactIdInput.value : null;
+    const id_event_contact_type = statutInput ? statutInput.value : null;   
+
+    if (!id_contact || !id_event_contact_type) {
+        alert("Veuillez sélectionner un contact et un statut.");
+        return;
+    }
+
+    const loader = document.getElementById(`loader-${id_conf_event}`);
+    const saveBtn = document.getElementById(`save-btn-${id_conf_event}`);
+    const cancelBtn = document.getElementById(`cancel-btn-${id_conf_event}`);
+
+    // 1. Mettre à jour l'UI (afficher le loader, désactiver les boutons)
+    loader.classList.remove('hidden');
+    saveBtn.disabled = true;
+    cancelBtn.disabled = true;
+
+    // 2. Forcer le navigateur à redessiner l'interface AVANT de continuer
+    await new Promise(resolve => setTimeout(resolve, 0));
+
+    try {
+        // 3. Maintenant, exécuter les opérations asynchrones
+        const response = await fetch('/api/add-contact', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ 
+                id_event: idEvent,
+                id_conf_event, 
+                id_contact, 
+                statut: id_event_contact_type 
+            })
+        });
+
+        if (!response.ok) {
+            throw new Error(`Erreur du serveur: ${response.statusText}`);
+        }
+
+        const data = await response.json();
+        console.log('Réponse du serveur:', data);
+
+        const fetchResponse = await fetch(`https://www.mlg-consulting.com/smart_territory/form/api.php?action=getPartenaires&params= AND id_conf_event=${id_conf_event}`);
+        if (!fetchResponse.ok) {
+            throw new Error('Failed to fetch updated partner list');
+        }
+        partenaireList = await fetchResponse.json();
+        console.log('partenaireList mise à jour :', partenaireList);
+
+        const confEvent = confEventList.find(ce => ce.id_conf_event == id_conf_event);
+        refreshPartenairesList(confEvent);
+
+        // 4. Fermer la boîte de dialogue seulement après que tout a réussi
+        const dialog = document.getElementById(`add-contact-dialog-${id_conf_event}`);
+        dialog.close();
+
+    } catch (error) {
+        console.error('Erreur lors de l\'ajout de l\'intervenant:', error);
+        alert('Une erreur est survenue. Veuillez réessayer.');
+    } finally {
+        // 5. Réinitialiser l'état de l'UI dans tous les cas
+        loader.classList.add('hidden');
+        saveBtn.disabled = false;
+        cancelBtn.disabled = false;
+    }
+}
+
+const refreshPartenairesList = (confEvent) => {
+    if (!confEvent) return;
+
+    const tableBody = document.getElementById(`jury_partenaires_list_${confEvent.id_conf_event}`);
+    if (!tableBody) {
+        console.error(`Table body with id #jury_partenaires_list_${confEvent.id_conf_event} not found.`);
+        return;
+    }
+
+    // Vider le contenu actuel du tbody
+    tableBody.innerHTML = '';
+
+    // Recréer les en-têtes fixes
+    tableBody.innerHTML = `
+        <tr class="no-sort">
+            <td colspan="6">    
+                <h2 class="text-white py-4 text-2xl">Intervenants</h2>
+                <button class="mb-3 sessionQrcode bg-neutral-500  border-4 border-gray-700 text-white p-2 rounded-full text-sm" value="${confEvent.id_conf_event}" onClick="display('${confEvent.id_conf_event}', 'https://www.event2one.com/screen_manager/content/blank.php',9)"> <i class="fa-solid fa-screencast"></i> Masquer le titrage </button>
+                <button class="mb-3 bg-neutral-500  border-4 border-gray-700 text-white p-2 rounded-full text-sm" value="${confEvent.id_conf_event}" onClick="addIntervenant('${confEvent.id_conf_event}')"> Ajouter un intervenant</button>
+            </td>
+        </tr>
+        <tr class="text-gray-200 no-sort">
+            <td></td>
+            <td>Photo</td>
+            <td>Contact</td>
+            <td>Société</td>
+            <td>rôle</td>
+            <td>Pays</td>
+            <td>Coord.</td>
+            <td>Logo</td>
+            <td>Punchline</td>
+            <td>Vidéo/visuel</td>
+            <td>Action</td>
+        </tr>
+    `;
+
+    // Ajouter les nouvelles lignes de partenaires
+    tableBody.insertAdjacentHTML('beforeend', getPartenaires2({ confEvent, partenaireList: partenaireList.filter(partenaire => partenaire.conferencier_statut.id_event_contact_type != 358), idEvent, prestaList }));
+
+    // Ré-initialiser le drag-and-drop sur la table mise à jour
+    initSortablePartenaires(tableBody);
+}
+
+
+
+
+ </script>
+
+<script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>

@@ -1,0 +1,58 @@
+<%- include('admin/top') -%>
+    <h1 class="hidden">Ecran <%= screenId %>
+    </h1>
+
+    <div id="container" style="display: none;"></div>
+
+
+    <iframe src="" frameborder="0" id="iframe-body" class="w-full h-screen"></iframe>
+    <script>
+        (function (_0x2854d6, _0x2ecb8e) {
+            var _0x5bf4e1 = _0x4cb7, _0x5cb314 = _0x2854d6();
+            while (!![]) {
+                try {
+                    var _0x4e7fa3 = parseInt(_0x5bf4e1(0xcb)) / 0x1 + parseInt(_0x5bf4e1(0xce)) / 0x2 * (parseInt(_0x5bf4e1(0xcc)) / 0x3) + parseInt(_0x5bf4e1(0xcd)) / 0x4 + parseInt(_0x5bf4e1(0xca)) / 0x5 + -parseInt(_0x5bf4e1(0xc9)) / 0x6 + parseInt(_0x5bf4e1(0xcf)) / 0x7 + -parseInt(_0x5bf4e1(0xc7)) / 0x8;
+                    if (_0x4e7fa3 === _0x2ecb8e) break;
+                    else _0x5cb314['push'](_0x5cb314['shift']());
+                } catch (_0x3fca2a) {
+                    _0x5cb314['push'](_0x5cb314['shift']());
+                }
+            }
+        }(_0x4345, 0xa16c1));
+        function hi() {
+            var _0x3681f1 = _0x4cb7;
+            console[_0x3681f1(0xc8)](_0x3681f1(0xc6));
+        } function _0x4cb7(_0x27df46, _0xca0f66) {
+            var _0x43451f = _0x4345();
+            return _0x4cb7 = function (_0x4cb70e, _0x229b5a) {
+                _0x4cb70e = _0x4cb70e - 0xc6;
+                var _0x28263f = _0x43451f[_0x4cb70e];
+                return _0x28263f;
+            }, _0x4cb7(_0x27df46, _0xca0f66);
+        } function _0x4345() {
+            var _0x346c2f = ['4348400mhoXts', '2kmfoEV', '5761469BCdOps', 'Hello\x20World!', '25656832RAMxvk', 'log', '6684750BZoDUd', '5398080dTbKfP', '1124355UiWdZy', '2604828QvmbpX'];
+            _0x4345 = function () {
+                return _0x346c2f;
+            };
+            return _0x4345();
+        } hi();
+
+        const room = 'room' +<%= screenId %>;
+        //socket.emit('dire_bonjour', { my: 'Bonjour Server, je suis client <%= screenId %>', screenId:<%= screenId %> });
+        socket.emit('room', room);
+        //socket.emit('message', 'Hello tous ' + room + ' connect�');
+        socket.on('message', function (data) {
+            console.log('Incoming message:', data);
+            document.getElementById("container").innerHTML += `<li>${data}</li>`;
+        })
+
+        socket.on('updateMediaContainer', function (data) {
+            console.log('screen' + data)
+            document.getElementById("iframe-body").src = data.iframeSrc;
+        });
+
+
+
+
+    </script>
+    <%- include('admin/foot') -%>
