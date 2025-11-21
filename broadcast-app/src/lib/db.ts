@@ -80,6 +80,12 @@ export const getContactStatutList = async ({ idEvent, idConfEvent }: { idEvent: 
 
 export const getPartenaires = async ({ idEvent, idConfEvent }: { idEvent: string, idConfEvent: string }) => {
     try {
+        // Validate IDs are numeric to prevent API errors (e.g. "app.js" passed as ID)
+        if (isNaN(Number(idEvent)) || isNaN(Number(idConfEvent))) {
+            console.warn(`Invalid IDs passed to getPartenaires: idEvent=${idEvent}, idConfEvent=${idConfEvent}`);
+            return { data: [] }; // Return empty data instead of crashing
+        }
+
         let req;
         if (idConfEvent == "0") {
             req = `https://www.mlg-consulting.com/smart_territory/form/api.php?action=getPartenaires&params= AND id_event=${idEvent} and afficher !='0'`;
