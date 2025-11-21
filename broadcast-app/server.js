@@ -1,7 +1,9 @@
-const { createServer } = require('http');
+const { createServer: createHttpServer } = require('http');
+const { createServer: createHttpsServer } = require('https');
 const { parse } = require('url');
 const next = require('next');
 const { Server } = require('socket.io');
+const fs = require('fs');
 require('dotenv').config();
 
 const dev = process.env.NODE_ENV !== 'production';
@@ -16,16 +18,37 @@ const handle = app.getRequestHandler();
 // They are used by Next.js API routes, not directly in this server file
 
 app.prepare().then(() => {
-    const server = createServer(async (req, res) => {
-        try {
-            const parsedUrl = parse(req.url, true);
-            await handle(req, res, parsedUrl);
-        } catch (err) {
-            console.error('Error occurred handling', req.url, err);
-            res.statusCode = 500;
-            res.end('internal server error');
-        }
-    });
+    let server;
+    try {
+        // Try to load SSL certificates
+        const cert = fs.readFileSync("/etc/ssl/www.event2one.com/autres-formats/www.event2one.com.pem");
+        const key = fs.readFileSync("/etc/ssl/www.event2one.com/www.event2one.com.key");
+        const options = { key, cert };
+
+        server = createHttpsServer(options, async (req, res) => {
+            try {
+                const parsedUrl = parse(req.url, true);
+                await handle(req, res, parsedUrl);
+            } catch (err) {
+                console.error('Error occurred handling', req.url, err);
+                res.statusCode = 500;
+                res.end('internal server error');
+            }
+        });
+        console.log("SSL certificates found. Starting HTTPS server.");
+    } catch (e) {
+        console.log("SSL certificates not found. Starting HTTP server.");
+        server = createHttpServer(async (req, res) => {
+            try {
+                const parsedUrl = parse(req.url, true);
+                await handle(req, res, parsedUrl);
+            } catch (err) {
+                console.error('Error occurred handling', req.url, err);
+                res.statusCode = 500;
+                res.end('internal server error');
+            }
+        });
+    }
 
     // Socket.IO setup
     const io = new Server(server, {
