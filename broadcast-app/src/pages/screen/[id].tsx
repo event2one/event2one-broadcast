@@ -19,14 +19,8 @@ export default function Screen() {
         // DEBUG: Version check
         console.log('Socket.IO Client [Screen] - v3 - Hostname:', window.location.hostname);
 
-        const isProduction = window.location.hostname.includes('event2one.com');
-
-        if (isProduction) {
-            socketRef.current = io({ path: '/broadcast/socket.io' });
-        } else {
-            // Fallback for localhost or other environments
-            socketRef.current = io('http://localhost:3001', { path: '/broadcast/socket.io' });
-        }
+        // Connect to Socket.IO server using relative path (works for both dev and prod)
+        socketRef.current = io({ path: '/broadcast/socket.io' });
         const socket = socketRef.current;
 
         // Join the room for this screen
@@ -39,7 +33,16 @@ export default function Screen() {
         socket.on('updateMediaContainer', (data: { screenId: string, iframeSrc: string }) => {
             console.log('Received updateMediaContainer:', data);
             if (data.screenId === screenId) {
-                setIframeSrc(data.iframeSrc);
+                let src = data.iframeSrc;
+
+                // In development, proxy event2one.com URLs to bypass X-Frame-Options
+                const isDev = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+                if (isDev && src.includes('event2one.com')) {
+                    src = `/broadcast/api/proxy?url=${encodeURIComponent(src)}`;
+                    console.log('Using proxy for:', src);
+                }
+
+                setIframeSrc(src);
             }
         });
 

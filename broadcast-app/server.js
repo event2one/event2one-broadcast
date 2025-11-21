@@ -26,6 +26,7 @@ app.prepare().then(() => {
         const options = { key, cert };
 
         server = createHttpsServer(options, async (req, res) => {
+            if (req.url.startsWith('/broadcast/socket.io')) return;
             try {
                 const parsedUrl = parse(req.url, true);
                 await handle(req, res, parsedUrl);
@@ -39,6 +40,7 @@ app.prepare().then(() => {
     } catch (e) {
         console.log("SSL certificates not found. Starting HTTP server.");
         server = createHttpServer(async (req, res) => {
+            if (req.url.startsWith('/broadcast/socket.io')) return;
             try {
                 const parsedUrl = parse(req.url, true);
                 await handle(req, res, parsedUrl);

@@ -234,9 +234,12 @@ const AdminPage: React.FC<AdminPageProps> = (props) => {
     const sensors = useSensors(useSensor(PointerSensor));
 
     const display = (id_jury_event_enc: string, src: string, screenIdOverride?: number) => {
-        const currentScreenId = screenIdOverride ? screenIdOverride.toString() : (document.getElementById("screenSelector") as HTMLSelectElement)?.value;
+        const currentScreenId = screenIdOverride ? screenIdOverride.toString() : previewScreenId.toString();
         if (socketRef.current) {
+            console.log(`Emitting updateMediaContainer to screen ${currentScreenId} with src: ${src}`);
             socketRef.current.emit('updateMediaContainer', { screenId: currentScreenId, name: "ddddddddddddddddd", iframeSrc: src });
+        } else {
+            console.error("Socket not connected");
         }
     };
 
@@ -457,14 +460,8 @@ const AdminPage: React.FC<AdminPageProps> = (props) => {
 
     useEffect(() => {
         // Socket.IO URL based on environment
-        console.log('Socket.IO Client [Admin] - v3 - Hostname:', window.location.hostname);
-        const isProduction = window.location.hostname.includes('event2one.com');
-
-        if (isProduction) {
-            socketRef.current = io({ path: '/broadcast/socket.io' });
-        } else {
-            socketRef.current = io('http://localhost:3001', { path: '/broadcast/socket.io' });
-        }
+        // Connect to Socket.IO server using relative path (works for both dev and prod)
+        socketRef.current = io({ path: '/broadcast/socket.io' });
         const socket = socketRef.current;
         socket.emit('dire_bonjour', { my: 'Bonjour server, je suis admin' });
         socket.on('connect', () => socket.emit('check_connexion', { name: 'admin' }));
@@ -824,7 +821,7 @@ const AdminPage: React.FC<AdminPageProps> = (props) => {
                                     </div>
                                     <div className="flex-1 bg-black rounded-lg overflow-hidden border border-neutral-800 relative">
                                         <iframe
-                                            src={`http://localhost:3001/broadcast/screen/${previewScreenId}`}
+                                            src={`/broadcast/screen/${previewScreenId}`}
                                             className="absolute inset-0 w-full h-full border-0"
                                             title={`Screen ${previewScreenId}`}
                                         />
