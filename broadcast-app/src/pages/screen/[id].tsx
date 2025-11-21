@@ -16,7 +16,11 @@ export default function Screen() {
         if (!screenId) return;
 
         // Connect to Socket.IO server
-        socketRef.current = io('http://localhost:3001');
+        const socketUrl = process.env.NODE_ENV === 'production'
+            ? 'https://www.event2one.com/broadcast'
+            : 'http://localhost:3001';
+
+        socketRef.current = io(socketUrl);
         const socket = socketRef.current;
 
         // Join the room for this screen
