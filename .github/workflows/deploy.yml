@@ -17,19 +17,19 @@ jobs:
         port: ${{ secrets.SSH_PORT || '22' }}
         script: |
           # Navigate to project directory
-          cd /var/www/broadcast
+          cd /var/www/e2o/broadcast
 
           # Pull latest changes
           git pull origin main
 
-          # Install Backend Dependencies
-          npm install
-
-          # Install Frontend Dependencies and Build
+          # Navigate to broadcast-app
           cd broadcast-app
-          npm install
-          npm run build
-          cd ..
 
-          # Restart PM2 processes
+          # Install dependencies
+          npm install
+
+          # Build Next.js app
+          npm run build
+
+          # Reload PM2 process
           pm2 reload ecosystem.config.js
