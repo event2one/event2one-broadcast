@@ -41,7 +41,7 @@ const AdminPage: React.FC<AdminPageProps> = (props) => {
         const socket = io();
         socket.emit('dire_bonjour', { my: 'Bonjour server, je suis admin' });
         socket.on('connect', () => {
-            socket.broadcast.emit('check_connexion', { name: 'admin' });
+            socket.emit('check_connexion', { name: 'admin' });
         });
         // keep socket reference if you need it elsewhere
         return () => {

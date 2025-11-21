@@ -84,66 +84,69 @@ pm2 logs broadcast --lines 50
 
 ## 🌐 Étape 3 : Configuration Apache
 
-Vous avez **deux options** :
+### Modifier le VirtualHost existant de www.event2one.com
 
-### Option A : Sous-domaine `broadcast.event2one.com` ✨ (Recommandé)
+Éditez le fichier de configuration Apache existant :
 
-#### 1. Créer l'enregistrement DNS
-Dans votre gestionnaire DNS (OVH, Cloudflare, etc.) :
-```
-Type: A
-Nom: broadcast
-Valeur: [IP de votre serveur]
-TTL: 3600
-```
-
-#### 2. Obtenir le certificat SSL
 ```bash
-sudo certbot certonly --apache -d broadcast.event2one.com
+sudo nano /etc/apache2/sites-available/www.event2one.com.conf
 ```
 
-#### 3. Créer le VirtualHost
-```bash
-sudo nano /etc/apache2/sites-available/broadcast.event2one.com.conf
-```
+Dans le bloc `<VirtualHost *:443>`, **ajoutez** ces lignes :
 
-Coller cette configuration :
 ```apache
-<VirtualHost *:80>
-    ServerName broadcast.event2one.com
-    Redirect permanent / https://broadcast.event2one.com/
-</VirtualHost>
+# Reverse Proxy pour /broadcast
+ProxyPreserveHost On
+ProxyPass /broadcast http://localhost:3001/broadcast
+ProxyPassReverse /broadcast http://localhost:3001/broadcast
 
+# Support WebSocket pour Socket.IO
+RewriteEngine On
+RewriteCond %{HTTP:Upgrade} =websocket [NC]
+RewriteRule /broadcast/(.*) ws://localhost:3001/broadcast/$1 [P,L]
+
+# Headers de sécurité
+Header always set X-Frame-Options "SAMEORIGIN"
+Header always set X-Content-Type-Options "nosniff"
+```
+
+**Exemple de VirtualHost complet :**
+
+```apache
 <VirtualHost *:443>
-    ServerName broadcast.event2one.com
+    ServerName www.event2one.com
+    DocumentRoot /var/www/html
     
+    # Configuration SSL existante
     SSLEngine on
-    SSLCertificateFile /etc/letsencrypt/live/broadcast.event2one.com/fullchain.pem
-    SSLCertificateKeyFile /etc/letsencrypt/live/broadcast.event2one.com/privkey.pem
+    SSLCertificateFile /etc/letsencrypt/live/www.event2one.com/fullchain.pem
+    SSLCertificateKeyFile /etc/letsencrypt/live/www.event2one.com/privkey.pem
     
+    # ... autres configurations existantes ...
+    
+    # ===== AJOUTER ICI =====
+    # Reverse Proxy pour /broadcast
     ProxyPreserveHost On
-    ProxyPass / http://localhost:3001/
-    ProxyPassReverse / http://localhost:3001/
+    ProxyPass /broadcast http://localhost:3001/broadcast
+    ProxyPassReverse /broadcast http://localhost:3001/broadcast
     
+    # Support WebSocket pour Socket.IO
     RewriteEngine On
     RewriteCond %{HTTP:Upgrade} =websocket [NC]
-    RewriteRule /(.*) ws://localhost:3001/$1 [P,L]
+    RewriteRule /broadcast/(.*) ws://localhost:3001/broadcast/$1 [P,L]
     
+    # Headers de sécurité
     Header always set X-Frame-Options "SAMEORIGIN"
     Header always set X-Content-Type-Options "nosniff"
-    
-    ErrorLog ${APACHE_LOG_DIR}/broadcast-error.log
-    CustomLog ${APACHE_LOG_DIR}/broadcast-access.log combined
+    # ===== FIN =====
 </VirtualHost>
 ```
 
-#### 4. Activer le site
+### Activer les modules et recharger Apache
+
 ```bash
 # Activer les modules nécessaires
-sudo a2enmod proxy proxy_http proxy_wstunnel rewrite headers ssl
-
-# Activer le site
-sudo a2ensite broadcast.event2one.com
+sudo a2enmod proxy proxy_http proxy_wstunnel rewrite headers
 
 # Vérifier la configuration
 sudo apache2ctl configtest
@@ -151,15 +154,6 @@ sudo apache2ctl configtest
 # Recharger Apache
 sudo systemctl reload apache2
 ```
-
-#### 5. Tester
-Ouvrir dans le navigateur : `https://broadcast.event2one.com/event/470/admin/176895`
-
----
-
-### Option B : Sous-répertoire `/broadcast` (Alternative)
-
-Si vous préférez garder `www.event2one.com/broadcast`, suivez le guide dans `APACHE_CONFIG.md`.
 
 ---
 
@@ -185,11 +179,7 @@ sudo tail -f /var/log/apache2/broadcast-error.log
 
 ### 3. Tester dans le Navigateur
 
-**Option A (sous-domaine) :**
-- Admin : `https://broadcast.event2one.com/event/470/admin/176895`
-- Screen : `https://broadcast.event2one.com/screen/1`
-
-**Option B (sous-répertoire) :**
+**URLs de test :**
 - Admin : `https://www.event2one.com/broadcast/event/470/admin/176895`
 - Screen : `https://www.event2one.com/broadcast/screen/1`
 

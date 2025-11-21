@@ -142,13 +142,18 @@ function SortableContactRow({ partenaire, presta, index, idEvent, onPublish, onC
                         <TooltipTrigger asChild>
                             <Button
                                 size="sm"
-                                onClick={() => onPublish(
-                                    partenaire.contact.id_contact,
-                                    idEvent,
-                                    presta?.id_presta,
-                                    partenaire.conferencier_statut?.id_event_contact_type
-                                )}
+                                onClick={() => {
+                                    if (partenaire.contact?.id_contact) {
+                                        onPublish(
+                                            partenaire.contact.id_contact,
+                                            idEvent,
+                                            presta?.id_presta,
+                                            partenaire.conferencier_statut?.id_event_contact_type
+                                        );
+                                    }
+                                }}
                                 className="h-6 w-6 p-0 bg-emerald-600 hover:bg-emerald-700"
+                                disabled={!partenaire.contact?.id_contact}
                             >
                                 <Play className="w-3 h-3" />
                             </Button>
@@ -721,9 +726,9 @@ const AdminPage: React.FC<AdminPageProps> = (props) => {
                                 const term = searchTerm.toLowerCase();
                                 const contact = p.contact;
                                 return (
-                                    contact.nom?.toLowerCase().includes(term) ||
-                                    contact.prenom?.toLowerCase().includes(term) ||
-                                    contact.societe?.toLowerCase().includes(term)
+                                    contact?.nom?.toLowerCase().includes(term) ||
+                                    contact?.prenom?.toLowerCase().includes(term) ||
+                                    contact?.societe?.toLowerCase().includes(term)
                                 );
                             }).map(p => p.id_conferencier)} strategy={verticalListSortingStrategy}>
                                 <div className="space-y-0.5">
@@ -731,13 +736,13 @@ const AdminPage: React.FC<AdminPageProps> = (props) => {
                                         const term = searchTerm.toLowerCase();
                                         const contact = p.contact;
                                         return (
-                                            contact.nom?.toLowerCase().includes(term) ||
-                                            contact.prenom?.toLowerCase().includes(term) ||
-                                            contact.societe?.toLowerCase().includes(term)
+                                            contact?.nom?.toLowerCase().includes(term) ||
+                                            contact?.prenom?.toLowerCase().includes(term) ||
+                                            contact?.societe?.toLowerCase().includes(term)
                                         );
                                     }).map((partenaire, index) => {
                                         // Get the first prestation from the list
-                                        const presta = partenaire.contact.prestas_list?.[0];
+                                        const presta = partenaire.contact?.prestas_list?.[0];
                                         if (!partenaire.contact) return null;
                                         return (
                                             <SortableContactRow
