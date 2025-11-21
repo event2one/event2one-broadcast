@@ -38,7 +38,7 @@ const AdminPage: React.FC<AdminPageProps> = (props) => {
 
     useEffect(() => {
         // socket.io client – you can use the official client library
-        const socket = io();
+        const socket = io({ path: '/broadcast/socket.io' });
         socket.emit('dire_bonjour', { my: 'Bonjour server, je suis admin' });
         socket.on('connect', () => {
             socket.emit('check_connexion', { name: 'admin' });

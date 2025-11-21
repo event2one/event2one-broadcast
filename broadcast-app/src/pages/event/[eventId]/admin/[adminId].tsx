@@ -458,10 +458,10 @@ const AdminPage: React.FC<AdminPageProps> = (props) => {
     useEffect(() => {
         // Socket.IO URL based on environment
         const socketUrl = process.env.NODE_ENV === 'production'
-            ? 'https://www.event2one.com/broadcast'
+            ? undefined // Connect to current origin
             : 'http://localhost:3001';
 
-        socketRef.current = io(socketUrl);
+        socketRef.current = io(socketUrl, { path: '/broadcast/socket.io' });
         const socket = socketRef.current;
         socket.emit('dire_bonjour', { my: 'Bonjour server, je suis admin' });
         socket.on('connect', () => socket.emit('check_connexion', { name: 'admin' }));
