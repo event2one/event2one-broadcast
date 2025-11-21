@@ -5,3 +5,4 @@ npm-debug.log
 app.log
 broadcast-app/.next
 broadcast-app/node_modules
+broadcast-app/src/pages/api/proxy.ts
