@@ -16,12 +16,14 @@ export default function Screen() {
         if (!screenId) return;
 
         // Connect to Socket.IO server
-        // In production, use relative URL to avoid CORS and leverage proxy
-        const socketUrl = process.env.NODE_ENV === 'production'
-            ? undefined // Connect to current origin
-            : 'http://localhost:3001';
+        // Robust check: if we are not on localhost, assume production/relative path
+        const isLocalhost = typeof window !== 'undefined' && window.location.hostname === 'localhost';
 
-        socketRef.current = io(socketUrl, { path: '/broadcast/socket.io' });
+        if (isLocalhost) {
+            socketRef.current = io('http://localhost:3001', { path: '/broadcast/socket.io' });
+        } else {
+            socketRef.current = io({ path: '/broadcast/socket.io' });
+        }
         const socket = socketRef.current;
 
         // Join the room for this screen
